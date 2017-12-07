@@ -1,0 +1,199 @@
+{
+    "0.1": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 10
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "DD": 10
+        },
+        "Q-agent vs TFT": {
+            "DD": 10
+        }
+    },
+    "0.2": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 10
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "DD": 10
+        },
+        "Q-agent vs TFT": {
+            "DD": 10
+        }
+    },
+    "0.3": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 10
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "AA": 2,
+            "DD": 8
+        },
+        "Q-agent vs TFT": {
+            "AA": 9,
+            "DD": 1
+        }
+    },
+    "0.4": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 10
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "AA": 1,
+            "DD": 9
+        },
+        "Q-agent vs TFT": {
+            "AA": 10
+        }
+    },
+    "0.5": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 10
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "DD": 10
+        },
+        "Q-agent vs TFT": {
+            "AA": 10
+        }
+    },
+    "0.6": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 9,
+            "AD": 1
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "AA": 2,
+            "DD": 8
+        },
+        "Q-agent vs TFT": {
+            "AA": 10
+        }
+    },
+    "0.7": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 9,
+            "AD": 1
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "AA": 2,
+            "DD": 8
+        },
+        "Q-agent vs TFT": {
+            "AA": 9,
+            "CC": 1
+        }
+    },
+    "0.8": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 9,
+            "AD": 1
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "AA": 5,
+            "DD": 5
+        },
+        "Q-agent vs TFT": {
+            "AA": 7,
+            "CC": 3
+        }
+    },
+    "0.9": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 7,
+            "AD": 3
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "AA": 3,
+            "AD": 2,
+            "DD": 5
+        },
+        "Q-agent vs TFT": {
+            "AA": 7,
+            "CC": 3
+        }
+    },
+    "0.99": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 8,
+            "AD": 2
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "AA": 2,
+            "DD": 8
+        },
+        "Q-agent vs TFT": {
+            "AA": 3,
+            "CC": 6,
+            "DD": 1
+        }
+    },
+    "0.999": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 7,
+            "AD": 2,
+            "DD": 1
+        },
+        "PGA-PP vs TFT": {
+            "AA": 10
+        },
+        "Q-agent vs Q-agent": {
+            "AA": 2,
+            "AD": 2,
+            "DD": 6
+        },
+        "Q-agent vs TFT": {
+            "AA": 7,
+            "CC": 3
+        }
+    },
+    "0.9999": {
+        "PGA-PP vs PGA-PP": {
+            "AA": 6,
+            "AD": 4
+        },
+        "PGA-PP vs TFT": {
+            "AA": 9,
+            "AC": 1
+        },
+        "Q-agent vs Q-agent": {
+            "AA": 1,
+            "AD": 2,
+            "DD": 7
+        },
+        "Q-agent vs TFT": {
+            "AA": 9,
+            "CC": 1
+        }
+    }
+}
