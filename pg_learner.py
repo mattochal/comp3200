@@ -7,7 +7,7 @@ class PGLearner:
         Policy gradient learner
     """
 
-    def __init__(self, n, a=0.2, end_ratio_a=1, g=0.9, exp_strategy=EGreedyExploration(1, 0.05, 1000)):
+    def __init__(self, n, a=0.2, end_ratio_a=1, g=0.9, exp_strategy=EGreedyExploration(1, 0.05, 10000)):
         # n = number of games
         self.rewards = []
 

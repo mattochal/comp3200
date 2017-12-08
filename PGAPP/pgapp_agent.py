@@ -22,7 +22,7 @@ class BasicPolicyExploration(Exploration):
     def __init__(self):
         super(BasicPolicyExploration).__init__()
         self.current_policy = None
-        self.e = LearningParam(init_value=0.5, end_value_ratio=0.1, n=50000)
+        self.e = LearningParam(init_value=1, end_value_ratio=0.01, n=10000)
 
     def set_belief(self, belief):
         super().set_belief(belief)
@@ -77,7 +77,7 @@ class PGAPPLearner(Agent):
         Agent for Policy gradient Ascent with approximate policy prediction
     """
 
-    def __init__(self, n, a=0.2, end_ratio_a=1, g=0.9, exp_strategy=EGreedyExploration(1, 0.05, 1000)):
+    def __init__(self, n, a=0.2, end_ratio_a=1, g=0.9, exp_strategy=BasicPolicyExploration()):
         super(PGAPPLearner, self).__init__()
         self.alpha = a
         self.gamma = g  # discount factor

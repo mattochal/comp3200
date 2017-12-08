@@ -1,0 +1,43 @@
+{
+    "0.1": {
+        "Q-agent vs Q-agent": {
+            "DD": 100
+        }
+    },
+    "0.25": {
+        "Q-agent vs Q-agent": {
+            "DD": 100
+        }
+    },
+    "0.5": {
+        "Q-agent vs Q-agent": {
+            "DD": 100
+        }
+    },
+    "0.75": {
+        "Q-agent vs Q-agent": {
+            "AA": 2,
+            "DD": 98
+        }
+    },
+    "0.9": {
+        "Q-agent vs Q-agent": {
+            "AA": 5,
+            "AC": 7,
+            "AD": 4,
+            "CC": 9,
+            "DD": 75
+        }
+    },
+    "0.99": {
+        "Q-agent vs Q-agent": {
+            "AD": 71,
+            "DD": 29
+        }
+    },
+    "0.9995": {
+        "Q-agent vs Q-agent": {
+            "DD": 100
+        }
+    }
+}

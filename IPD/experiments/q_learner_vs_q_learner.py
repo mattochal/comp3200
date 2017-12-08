@@ -9,6 +9,7 @@ def basic_game(n, g, print_summary=False):
     l1 = QLearner(n, g=g, exp_strategy=EGreedyExploration(n, 1, 0.01))
     l2 = QLearner(n, g=g, exp_strategy=EGreedyExploration(n, 1, 0.01))
 
+
     l1_action = l1.init_action()
     l2_action = l2.init_action()
 

@@ -41,19 +41,19 @@ for g in [0.1, 0.25, 0.5, 0.75, 0.9, 0.99, 0.9995]:
     print("\n\n----------------------- gamma = {0} -----------------------\n".format(g))
     for e in range(episodes):
         print("episode ", e)
-        a1, a2, = q_learner_vs_tft_ipd.basic_game(n, g)
-        add_result(g, "Q-agent vs TFT", a1, a2)
+        # a1, a2, = q_learner_vs_tft_ipd.basic_game(n, g)
+        # add_result(g, "Q-agent vs TFT", a1, a2)
 
         # a1, a2, = pgapp_vs_tft.basic_game(n, g)
         # add_result(g, "PGA-PP vs TFT", a1, a2)
-        #
-        # a1, a2, = q_learner_vs_q_learner.basic_game(n, g)
-        # add_result(g, "Q-agent vs Q-agent", a1, a2)
-        #
+
+        a1, a2, = q_learner_vs_q_learner.basic_game(n, g)
+        add_result(g, "Q-agent vs Q-agent", a1, a2)
+
         # a1, a2, = pgapp_vs_pgapp.basic_game(n, g)
         # add_result(g, "PGA-PP vs PGA-PP", a1, a2)
 
 data = json.loads(json.dumps(results))
 
-with open('results.json', 'w') as outfile:
+with open('resultsPGAPGA.json', 'w') as outfile:
     json.dump(data, outfile, sort_keys=True, indent=4, ensure_ascii=False)
