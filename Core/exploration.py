@@ -45,7 +45,7 @@ class EGreedyExploration(Exploration):
         self.end_epsilon_ratio = end_epsilon_ratio
         self.epsilon = init_epsilon
         self.rate = 1.0*end_epsilon_ratio**(1.0/n)
-        print(self.rate)
+        # print(self.rate)
 
     def policy(self, observation):
         A = np.ones(self.belief.action_space, dtype=float) * self.epsilon / self.belief.action_space

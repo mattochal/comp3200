@@ -1,4 +1,4 @@
-from Core.belief import QBelief
+from Core.belief import BeliefWithOppQBeliefLOLA
 
 
 class LolaLearner:
@@ -17,7 +17,7 @@ class LolaLearner:
         self.e_rate = 1.0*decrease_e_by**(1.0/n)
 
         self.discount = 0.9
-        self.belief = QBelief(2, self.discount)
+        self.belief = BeliefWithOppQBeliefLOLA(2, self.discount)
         self.action_history = []
 
     def init_action(self):

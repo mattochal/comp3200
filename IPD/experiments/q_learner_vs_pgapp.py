@@ -2,6 +2,7 @@ from Core.exploration import *
 from IPD.ipd_env import IPDEnv
 from PGAPP.pgapp_agent import PGAPPLearner, BasicPolicyExploration
 from tft_agent import TFTAgent
+from q_learner import QLearner
 
 
 def basic_game(n, g, print_summary=False):
@@ -9,7 +10,7 @@ def basic_game(n, g, print_summary=False):
 
     env = IPDEnv()
 
-    l1 = PGAPPLearner(n, g=g, exp_strategy=BasicPolicyExploration())
+    l1 = QLearner(n, g=g, exp_strategy=EGreedyExploration(n, 1, 0.01))
     l2 = PGAPPLearner(n, g=g, exp_strategy=BasicPolicyExploration())
 
     l1_action = l1.init_action()
@@ -37,15 +38,15 @@ def basic_game(n, g, print_summary=False):
         l2_action = next_action_l2
 
     if print_summary:
-        print("L1 Belief")
+        print("QLearner Belief")
         l1.belief.print_belief()
 
-        print("L2 Belief")
+        print("PGAPPLearner Belief")
         l2.belief.print_belief()
 
-        print("L1: ", l1.total_reward)
+        print("QLearner: ", l1.total_reward)
         env.print_action_history(l1.transitions, last_n_moves=50)
-        print("L2: ", l2.total_reward)
+        print("PGAPPLearner: ", l2.total_reward)
         env.print_action_history(l2.transitions, last_n_moves=50)
 
     return l1, l2

@@ -47,8 +47,8 @@ def basic_game(n, g, print_summary=False):
         print("learner: ", learner.total_reward)
         env.print_action_history(learner.transitions, last_n_moves=50)
 
-    return tft, learner
+    return learner, tft
+
 
 if __name__ == "__main__":
     basic_game(50000, g=0.9, print_summary=True)
-

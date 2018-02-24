@@ -1,6 +1,7 @@
 from Core.exploration import *
 from IPD.ipd_env import IPDEnv
 from q_learner import QLearner
+import matplotlib.pyplot as plt
 
 
 def basic_game(n, g, print_summary=False):
@@ -50,6 +51,25 @@ def basic_game(n, g, print_summary=False):
 
     return l1, l2
 
+
+def moving_average(a, n=50):
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
 if __name__ == "__main__":
-    basic_game(50000, g=0.90, print_summary=True)
+    n = 10000
+    a1, a2, = basic_game(n, g=0.90, print_summary=True)
+
+    data = np.zeros(n)
+    for i, t in enumerate(a1.transitions):
+        (state, action, reward, new_state) = t
+        data[i] = reward
+
+    plt.plot(moving_average(data))
+    plt.show()
+
+
+
+
 
