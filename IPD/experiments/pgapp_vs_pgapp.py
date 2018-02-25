@@ -1,7 +1,5 @@
-from Core.exploration import *
 from IPD.ipd_env import IPDEnv
 from PGAPP.pgapp_agent import PGAPPLearner, BasicPolicyExploration
-from tft_agent import TFTAgent
 
 
 def basic_game(n, g, print_summary=False):

@@ -2,41 +2,42 @@ import torch
 from LOLA_pytorch.IPD_game import av_return
 from LOLA_pytorch.IPD_modeling import policy_param_estimation_from_rollouts
 from torch.autograd import Variable
+import numpy as np
+
+from agent_pair import AgentPair
 
 
-def run(n=200, visualise=False):
+def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10, rollout_length=25, num_rollout=25):
     dtype = torch.FloatTensor
 
-    # ######################################
-    # LOLA-PG is based on trajectories
-    # ######################################
+    result = {"epoch": []}
 
     # true parameters for agent 1 and 2
     y1 = Variable(torch.zeros(5, 1).type(dtype), requires_grad=True)
     y2 = Variable(torch.zeros(5, 1).type(dtype), requires_grad=True)
 
     # Define rewards
-    r1 = Variable(torch.Tensor([0, -3, -1, -2]).type(dtype))
-    r2 = Variable(torch.Tensor([0, -1, -3, -2]).type(dtype))
+    r1 = Variable(torch.Tensor(payoff1).type(dtype))
+    r2 = Variable(torch.Tensor(payoff2).type(dtype))
 
     # Identity matrix
     I = Variable(torch.eye(4).type(dtype))
 
     # future reward discount factor
-    gamma = Variable(torch.Tensor([0.8]).type(dtype))
+    gamma = Variable(torch.Tensor([gamma]).type(dtype))
 
     # Term in f_nl update rule
-    delta = Variable(torch.Tensor([0.1]).type(dtype))
+    delta = Variable(torch.Tensor([delta]).type(dtype))
 
     # Term in f_lola update rule
-    eta = Variable(torch.Tensor([10]).type(dtype))
+    eta = Variable(torch.Tensor([eta]).type(dtype))
 
     for epoch in range(n):
         theta1 = torch.sigmoid(y1)
         theta2 = torch.sigmoid(y2)
 
         # These are the exact value functions of the agent 1 and 2
-        pm1Y, pm2Y = policy_param_estimation_from_rollouts(theta1, theta2)
+        pm1Y, pm2Y = policy_param_estimation_from_rollouts(theta1, theta2, rollout_length=rollout_length, num_rollout=num_rollout)
         pm1Y = Variable(torch.from_numpy(pm1Y).float(), requires_grad=True)
         pm2Y = Variable(torch.from_numpy(pm2Y).float(), requires_grad=True)
 
@@ -55,6 +56,7 @@ def run(n=200, visualise=False):
 
         V1 = torch.matmul(torch.matmul(P1[0, :], Zinv1), r1)  # True value function of agent 1
         V2 = torch.matmul(torch.matmul(P2[0, :], Zinv2), r2)  # True value function of agent 2
+
         V2_from1 = torch.matmul(torch.matmul(P1[0, :], Zinv1), r2)  # V2 from agent 1's perspective
         V1_from2 = torch.matmul(torch.matmul(P2[0, :], Zinv2), r1)  # V1 from agent 2's perspective
 
@@ -75,6 +77,11 @@ def run(n=200, visualise=False):
         d2V2Tensor = torch.cat([d2V2[i] for i in range(y1.size(0))], 1)
         d2V1Tensor = torch.cat([d2V1[i] for i in range(y1.size(0))], 1)
 
+        result["epoch"].append({"V1": np.squeeze(V1.data.cpu().numpy()).tolist(),
+                                "V2": np.squeeze(V2.data.cpu().numpy()).tolist(),
+                                "P1": np.squeeze(theta1.data.cpu().numpy()).tolist(),
+                                "P2": np.squeeze(theta2.data.cpu().numpy()).tolist()})
+
         # Update for LOLA agent
         y1.data += (delta * dV1[0] + delta * eta * torch.matmul(d2V2Tensor, dV1[1])).data
 
@@ -91,7 +98,18 @@ def run(n=200, visualise=False):
                 print("Rewards: {}".format(av_return(theta1, theta2)))
 
     # return policy of both agents
-    return torch.sigmoid(y1), torch.sigmoid(y2)
+    p1, p2 = torch.sigmoid(y1), torch.sigmoid(y2),
+    result["P1"] = np.squeeze(p1.data.cpu().numpy()).tolist()
+    result["P2"] = np.squeeze(p2.data.cpu().numpy()).tolist()
+    return p1, p2, result
+
+
+class LOLAOM_VS_LOLAOM(AgentPair):
+
+    def run(self, seed):
+        super(LOLAOM_VS_LOLAOM, self).run(seed)
+        return run(**self.parameters)
+
 
 if __name__ == "__main__":
     run(visualise=True)

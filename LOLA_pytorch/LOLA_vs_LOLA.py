@@ -2,9 +2,10 @@ import torch
 from LOLA_pytorch.IPD_game import av_return
 from torch.autograd import Variable
 import numpy as np
+from agent_pair import AgentPair
 
 
-def run(n=200, visualise=False):
+def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10):
     dtype = torch.FloatTensor
 
     # parameters, theta of agent 1 - LOLA LEARNER
@@ -14,20 +15,20 @@ def run(n=200, visualise=False):
     y2 = Variable(torch.zeros(5, 1).type(dtype), requires_grad=True)
 
     # Define rewards
-    r1 = Variable(torch.Tensor([-1, -3, 0, -2]).type(dtype))
-    r2 = Variable(torch.Tensor([-1, 0, -3, -2]).type(dtype))
+    r1 = Variable(torch.Tensor(payoff1).type(dtype))
+    r2 = Variable(torch.Tensor(payoff2).type(dtype))
 
     # Identity matrix
     I = Variable(torch.eye(4).type(dtype))
 
     # future reward discount factor
-    gamma = Variable(torch.Tensor([0.8]).type(dtype))
+    gamma = Variable(torch.Tensor([gamma]).type(dtype))
 
     # Term in f_nl update rule
-    delta = Variable(torch.Tensor([0.1]).type(dtype))
+    delta = Variable(torch.Tensor([delta]).type(dtype))
 
     # Term in f_lola update rule
-    eta = Variable(torch.Tensor([10]).type(dtype))
+    eta = Variable(torch.Tensor([eta]).type(dtype))
 
     for epoch in range(n):
         x1 = torch.sigmoid(y1)
@@ -74,6 +75,14 @@ def run(n=200, visualise=False):
 
     # return policy of both agents
     return torch.sigmoid(y1), torch.sigmoid(y2)
+
+
+class LOLA_VS_LOLA(AgentPair):
+
+    def run(self, seed):
+        super(LOLA_VS_LOLA, self).run(seed)
+        return run(*self.parameters)
+
 
 if __name__ == "__main__":
     run(visualise=False)

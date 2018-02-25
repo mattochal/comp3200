@@ -1,4 +1,4 @@
-from Core.agent import Agent
+from Agents.agent import Agent
 
 
 class LOLAAgent(Agent):

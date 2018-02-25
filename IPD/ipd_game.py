@@ -1,6 +1,7 @@
-from IPD.ipd_env import IPDEnv
-from q_learner import QLearner
 from tft_agent import TFTAgent
+
+from IPD.ipd_env import IPDEnv
+from LOLA.q_learner import QLearner
 
 # number of game episodes
 n = 250

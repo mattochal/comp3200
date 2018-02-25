@@ -11,7 +11,7 @@ def run_experiment(repeats=5):
     results=defaultdict(lambda: [])
     for ex in range(repeats):
         print("Experiment: ", ex)
-        p1, p2 = LOLAOM_vs_LOLAOM.run(n=200)
+        p1, p2, _ = LOLAOM_vs_LOLAOM.run(n=200)
         results["LOLAOM_vs_LOLAOM"].append([p1.data.numpy(), p2.data.numpy()])
 
     for experiment in results.keys():

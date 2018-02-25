@@ -47,18 +47,11 @@ def policy_param_estimation_from_rollouts(policy1, policy2, rollout_length=25, n
     pm1 = np.asarray(p1C) / np.asarray(games_type_count)
     pm2 = np.asarray(p2C) / np.asarray(games_type_count)
 
-    # # for each nan field substitute with the corresponding policy value
-    # print("B:", pm1)
-    # print("B:", pm2)
-
     inds1 = np.where(np.isnan(pm1))
     inds2 = np.where(np.isnan(pm2))
 
     pm1[inds1] = np.take(policy1, inds1)
     pm2[inds2] = np.take(policy2, inds2)
-
-    # print("A:", pm1)
-    # print("A:", pm2)
 
     with np.errstate(divide='ignore'):
         pm1_y = np.log(np.divide(pm1, 1 - pm1))  # logit to get the a new set of proposed parameters

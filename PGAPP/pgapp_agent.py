@@ -1,8 +1,8 @@
-from Core.agent import Agent
+from Agents.agent import Agent
 from Core.belief import *
 from Core.exploration import *
 from Core.learning_param import LearningParam
-from q_learner import QBelief
+from LOLA.q_learner import QBelief
 
 """
     Policy gradient Ascent with approximate policy prediction

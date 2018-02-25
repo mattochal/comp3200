@@ -1,8 +1,7 @@
 from Core.exploration import *
 from IPD.ipd_env import IPDEnv
+from LOLA.q_learner import QLearner
 from PGAPP.pgapp_agent import PGAPPLearner, BasicPolicyExploration
-from tft_agent import TFTAgent
-from q_learner import QLearner
 
 
 def basic_game(n, g, print_summary=False):
