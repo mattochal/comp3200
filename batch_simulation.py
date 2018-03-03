@@ -48,7 +48,7 @@ def invoke_qsub(program, flags, output_stream, walltime):
 
     instr = """
 #PBS -l walltime={3}
-PBS_O_WORKDIR="3rdYearProject/"
+PBS_O_WORKDIR="comp3200/"
 cd $PBS_O_WORKDIR
 echo "path"
 echo $PBS_O_WORKDIR
@@ -57,7 +57,7 @@ module load python/3.6.1
 unset PYTHONPATH
 echo "Running {0} {1}"
 echo "Going to save output log to {2}"
-python {0} {1} > {2}""".format(program, flags_str, output_stream, walltime)
+python {0} {1} > {2}""".format(program, flags_str, output_stream + "_log", walltime)
 
     qsub_instr_file = output_stream + "_run"
     with open(qsub_instr_file, 'w') as file:
