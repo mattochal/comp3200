@@ -80,5 +80,5 @@ def plot_single_sim_run(path):
 
 
 if __name__ == "__main__":
-    plot_single_sim_run("result_lolaom_vs_lolaom_ISH.json")
-    plot_average_value("result_lolaom_vs_lolaom_ISH.json")
+    plot_single_sim_run("result_lolaom_vs_lolaom_ISD.json")
+    # plot_average_value("result_lolaom_vs_lolaom_IPD.json")

@@ -3,6 +3,7 @@ import json
 from LOLA_pytorch.LOLA_vs_LOLA import LOLA_VS_LOLA
 from LOLA_pytorch.LOLAOM_vs_LOLAOM import LOLAOM_VS_LOLAOM
 import time
+import sys, os
 
 
 def load_config(args_to_sub, path="config.json"):
@@ -14,6 +15,7 @@ def load_config(args_to_sub, path="config.json"):
 
 
 def save_results(results, filename):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, 'w') as outfile:
         json.dump(results, outfile, indent=2)
 
@@ -48,9 +50,9 @@ def main(args):
         agent_pair = agent_pair_class(config["agent pairs"][agent_pair_name], config["games"][game])
         _, _, result = agent_pair.run(seed=seed)
         results["results"]["seeds"].append(result)
-        print("\tRun took: ", time.time()-start_time, "ms")
+        print("\tRun took: ", time.time() - start_time, "ms")
 
-    save_results(results, "result_" + agent_pair_name + "_" + game + "_100.json")
+    save_results(results, args.output_folder + "result_" + agent_pair_name + "_" + game + ".json")
 
 
 if __name__ == "__main__":
@@ -58,6 +60,10 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--to_sub", nargs="+",
                         help='parameters which override the config file, '
                              'put each overriding parameter in separate quotes, '
-                             '\'tasks.arrival.distribution={ "name" : "poisson", "param" : [0.1] }\'')
-    args = parser.parse_args()
+                             '\'tasks.arrival.distribution={"name" : "poisson", "param" : [0.1] }\'')
+    parser.add_argument("-o", "--output_folder", help="output file", default="")
+    parser.add_argument("-i", "--input", help="input config file in Json format", default="config.json")
+    args = parser.parse_args(sys.argv[1:])
+    # print(sys.argv)
     main(args)
+

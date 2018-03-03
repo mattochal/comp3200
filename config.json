@@ -24,8 +24,8 @@
       "gamma":0.8,
       "delta":0.1,
       "eta":10,
-      "rollout_length":100,
-      "num_rollout":100
+      "rollout_length":50,
+      "num_rollout":50
     },
     "nl_vs_nl": {
 
@@ -39,7 +39,7 @@
       "payoff2" : [-1, 0, -3, -2],
       "n": 200
     },
-    "IHD":{
+    "ISD":{
       "payoff1" : [0, -1, 1, -10],
       "payoff2" : [0, 1, -1, -10],
       "n": 200
@@ -53,7 +53,7 @@
 
   "simulation": {
     "agent_pair": "lolaom_vs_lolaom",
-    "game": "IHD",
+    "game": "ISD",
     "repeats": 25,
     "seed_start": 0
   }
