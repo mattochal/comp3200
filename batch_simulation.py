@@ -58,7 +58,7 @@ module load python/3.5.1
 module load conda/4.3.21
 conda create --name mypytorch python=3.5 <<< $'y'
 source activate mypytorch
-conda install pytorch torchvision -c pytorch <<< $'y'
+pip install torch
 
 unset PYTHONPATH
 
