@@ -53,8 +53,14 @@ cd $PBS_O_WORKDIR
 echo "path"
 echo $PBS_O_WORKDIR
 module load numpy
-module load python/3.6.1
-unset PYTHONPATH
+module load python/3.5.1
+unset $PYTHONPATH
+
+module load conda/4.4.0
+conda create --name mypytorch python=3.5 <<< $'y'
+source activate mypytorch
+conda install pytorch <<< $'y'
+
 echo "Running {0} {1}"
 echo "Going to save output log to {2}"
 python {0} {1} > {2}""".format(program, flags_str, output_stream + "_log", walltime)
@@ -94,7 +100,7 @@ def lolaom_dilemmas(folder="lolaom_dilemmas/"):
     repeats = 25
     epochs = 200
 
-    wall_time_offset = 10*60
+    wall_time_offset = 15*60
     factor = 0.014
 
     for num in num_rollouts:
