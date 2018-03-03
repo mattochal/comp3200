@@ -73,9 +73,9 @@ def invoke_dilemmas_qsubs(output_stream, other_flags, params, epochs, walltime):
     agent_pair = "lolaom_vs_lolaom"
     for d in dilemmas:
         flags = other_flags[:]
-        flags.extend(["-p", """simulation.game = {0}""".format(json.dumps(d)),
-                      """simulation.agent_pair = {0}""".format(json.dumps(agent_pair)),
-                      """games.{0}.n = {1}""".format(d, epochs)])
+        flags.extend(["-p", """'simulation.game = {0}'""".format(json.dumps(d)),
+                      """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
+                      """'games.{0}.n = {1}'""".format(d, epochs)])
         flags.extend(params)
         # print(["/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python", "simulation.py", *flags])
         # call(["/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python", "simulation.py", *flags])
@@ -103,9 +103,10 @@ def lolaom_dilemmas(folder="lolaom_dilemmas/"):
             os.makedirs(sub_folder, exist_ok=True)
             wall_time = humanize_time(wall_time_offset + factor * (num*length - 25.0*20) * repeats)
             flags = ["-o", sub_folder, "-i", path_to_config]
-            params = ["""simulation.repeats = {0}""".format(json.dumps(repeats))]
+            params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats))]
             invoke_dilemmas_qsubs(sub_folder, flags, params, epochs, walltime=wall_time)
 
 
 if __name__ == "__main__":
     lolaom_dilemmas()
+
