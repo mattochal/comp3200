@@ -52,14 +52,15 @@ PBS_O_WORKDIR="comp3200/"
 cd $PBS_O_WORKDIR
 echo "path"
 echo $PBS_O_WORKDIR
+
 module load numpy
 module load python/3.5.1
-unset $PYTHONPATH
+module load conda/4.3.21
+conda create --name mypytorch_test2 python=3.5 <<< $'y'
+source activate mypytorch_test2
+conda install pytorch torchvision -c pytorch <<< $'y'
 
-module load conda/4.4.0
-conda create --name mypytorch python=3.5 <<< $'y'
-source activate mypytorch
-conda install pytorch <<< $'y'
+unset PYTHONPATH
 
 echo "Running {0} {1}"
 echo "Going to save output log to {2}"
@@ -74,18 +75,36 @@ python {0} {1} > {2}""".format(program, flags_str, output_stream + "_log", wallt
     call(instr)
 
 
+def invoke_bash(program, flags, output_stream):
+    flags_str = ""
+    for f in flags:
+        flags_str += f + " "
+
+    instr = """/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python {0} {1} > {2}"""\
+        .format(program, flags_str, output_stream + "_log")
+
+    qsub_instr_file = output_stream + "_run"
+    with open(qsub_instr_file, 'w') as file:
+        file.write(instr)
+
+    instr = ["bash", qsub_instr_file]
+    print(instr)
+    call(instr)
+
+
 def invoke_dilemmas_qsubs(output_stream, other_flags, params, epochs, walltime):
     dilemmas = ["IPD", "ISD", "ISH"]
     agent_pair = "lolaom_vs_lolaom"
     for d in dilemmas:
         flags = other_flags[:]
-        flags.extend(["-p", """'simulation.game = {0}'""".format(json.dumps(d)),
-                      """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
-                      """'games.{0}.n = {1}'""".format(d, epochs)])
+        flags.extend(["-p", r"""'simulation.game = {0}'""".format(json.dumps(d)),
+                      r"""'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
+                      r"""'games.{0}.n = {1}'""".format(d, epochs)])
         flags.extend(params)
         # print(["/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python", "simulation.py", *flags])
         # call(["/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python", "simulation.py", *flags])
-        invoke_qsub("simulation.py", flags, output_stream + "" + agent_pair + "_" + d, walltime)
+        invoke_bash("simulation.py", flags, output_stream + "" + agent_pair + "_" + d)
+        # invoke_qsub("simulation.py", flags, output_stream + "" + agent_pair + "_" + d, walltime)
 
 
 # experiment2 focuses on varying the high-to-low value job ratio between ranges of 0 and 0.2 probability

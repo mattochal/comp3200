@@ -51,8 +51,8 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
         # Agent 2 knows its own policy, and models agent 1's policy
         P2 = torch.cat((m_theta1 * theta2, m_theta1 * (1 - theta2), (1 - m_theta1) * theta2, (1 - m_theta1) * (1 - theta2)), 1)
 
-        Zinv1 = torch.inverse(I - gamma * P1[1:, :])
-        Zinv2 = torch.inverse(I - gamma * P2[1:, :])
+        Zinv1 = torch.inverse(I - (gamma.expand_as(I) * P1[1:, :]))
+        Zinv2 = torch.inverse(I - (gamma.expand_as(I) * P2[1:, :]))
 
         V1 = torch.matmul(torch.matmul(P1[0, :], Zinv1), r1)  # True value function of agent 1
         V2 = torch.matmul(torch.matmul(P2[0, :], Zinv2), r2)  # True value function of agent 2
