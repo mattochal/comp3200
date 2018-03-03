@@ -47,7 +47,7 @@ def main(args):
         print("\tRun:", i, "Seed:", seed)
 
         agent_pair_class = globals()[agent_pair_name.upper()]
-        agent_pair = agent_pair_class(config["agent pairs"][agent_pair_name], config["games"][game])
+        agent_pair = agent_pair_class(config["agent_pairs"][agent_pair_name], config["games"][game])
         _, _, result = agent_pair.run(seed=seed)
         results["results"]["seeds"].append(result)
         print("\tRun took: ", time.time() - start_time, "ms")

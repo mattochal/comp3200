@@ -56,8 +56,8 @@ echo $PBS_O_WORKDIR
 module load numpy
 module load python/3.5.1
 module load conda/4.3.21
-conda create --name mypytorch_test2 python=3.5 <<< $'y'
-source activate mypytorch_test2
+conda create --name mypytorch python=3.5 <<< $'y'
+source activate mypytorch
 conda install pytorch torchvision -c pytorch <<< $'y'
 
 unset PYTHONPATH
@@ -92,19 +92,20 @@ def invoke_bash(program, flags, output_stream):
     call(instr)
 
 
-def invoke_dilemmas_qsubs(output_stream, other_flags, params, epochs, walltime):
+def invoke_dilemmas_qsubs(output_stream, other_flags, params, epochs, agent_pair, walltime):
     dilemmas = ["IPD", "ISD", "ISH"]
-    agent_pair = "lolaom_vs_lolaom"
     for d in dilemmas:
         flags = other_flags[:]
-        flags.extend(["-p", r"""'simulation.game = {0}'""".format(json.dumps(d)),
-                      r"""'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
-                      r"""'games.{0}.n = {1}'""".format(d, epochs)])
+        flags.extend(["-p",
+                      """'simulation.game = {0}'""".format(json.dumps(d)),
+                      """'games.{0}.n = {1}'""".format(d, epochs)])
         flags.extend(params)
-        # print(["/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python", "simulation.py", *flags])
+
+        # DON'T USE (just for reference):
         # call(["/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python", "simulation.py", *flags])
-        invoke_bash("simulation.py", flags, output_stream + "" + agent_pair + "_" + d)
-        # invoke_qsub("simulation.py", flags, output_stream + "" + agent_pair + "_" + d, walltime)
+
+        # invoke_bash("simulation.py", flags, output_stream + "" + agent_pair + "_" + d)
+        invoke_qsub("simulation.py", flags, output_stream + "" + agent_pair + "_" + d, walltime)
 
 
 # experiment2 focuses on varying the high-to-low value job ratio between ranges of 0 and 0.2 probability
@@ -116,11 +117,12 @@ def lolaom_dilemmas(folder="lolaom_dilemmas/"):
     rollout_lengths = [20, 50, 100, 150]
     # num_rollouts = [5, 5]
     # rollout_lengths = [10, 20]
-    repeats = 25
+    repeats = 50
     epochs = 200
 
     wall_time_offset = 15*60
-    factor = 0.014
+    factor = 0.0145*2
+    agent_pair = "lolaom_vs_lolaom"
 
     for num in num_rollouts:
         for length in rollout_lengths:
@@ -128,8 +130,11 @@ def lolaom_dilemmas(folder="lolaom_dilemmas/"):
             os.makedirs(sub_folder, exist_ok=True)
             wall_time = humanize_time(wall_time_offset + factor * (num*length - 25.0*20) * repeats)
             flags = ["-o", sub_folder, "-i", path_to_config]
-            params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats))]
-            invoke_dilemmas_qsubs(sub_folder, flags, params, epochs, walltime=wall_time)
+            params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats)),
+                      """'agent_pairs.{0}.rollout_length = {1}'""".format(agent_pair, length),
+                      """'agent_pairs.{0}.num_rollout = {1}'""".format(agent_pair, num),
+                      """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair))]
+            invoke_dilemmas_qsubs(sub_folder, flags, params, epochs, agent_pair=agent_pair, walltime=wall_time)
 
 
 if __name__ == "__main__":
