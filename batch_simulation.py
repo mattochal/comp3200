@@ -1,7 +1,7 @@
 import json
 from subprocess import call
 import os
-
+import numpy as np
 import math
 
 WORKING_DIR = ""
@@ -80,8 +80,8 @@ def invoke_bash(program, flags, output_stream):
     for f in flags:
         flags_str += f + " "
 
-    instr = """/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python {0} {1} > {2}"""\
-        .format(program, flags_str, output_stream + "_log")
+    instr = """/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python {0} {1} """\
+        .format(program, flags_str)
 
     qsub_instr_file = output_stream + "_run"
     with open(qsub_instr_file, 'w') as file:
@@ -95,30 +95,33 @@ def invoke_bash(program, flags, output_stream):
 def invoke_dilemmas_qsubs(output_stream, other_flags, params, epochs, agent_pair, walltime):
     dilemmas = ["IPD", "ISD", "ISH"]
     for d in dilemmas:
-        flags = other_flags[:]
-        flags.extend(["-p",
-                      """'simulation.game = {0}'""".format(json.dumps(d)),
-                      """'games.{0}.n = {1}'""".format(d, epochs)])
-        flags.extend(params)
-
-        # DON'T USE (just for reference):
-        # call(["/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python", "simulation.py", *flags])
-
-        # invoke_bash("simulation.py", flags, output_stream + "" + agent_pair + "_" + d)
-        invoke_qsub("simulation.py", flags, output_stream + "" + agent_pair + "_" + d, walltime)
+        invoke_dilemma_qsubs(d, output_stream, other_flags, params, epochs, agent_pair, walltime)
 
 
-# experiment2 focuses on varying the high-to-low value job ratio between ranges of 0 and 0.2 probability
+def invoke_dilemma_qsubs(d, output_stream, other_flags, params, epochs, agent_pair, walltime):
+    flags = other_flags[:]
+    flags.extend(["-p",
+                  """'simulation.game = {0}'""".format(json.dumps(d)),
+                  """'games.{0}.n = {1}'""".format(d, epochs)])
+    flags.extend(params)
+
+    # DON'T USE (for reference only):
+    # call(["/Users/mateuszochal/.virtualenvs/3rdYearProject/bin/python", "simulation.py", *flags])
+
+    invoke_bash("simulation.py", flags, output_stream + "" + agent_pair + "_" + d)
+    # invoke_qsub("simulation.py", flags, output_stream + "" + agent_pair + "_" + d, walltime)
+
+
 def lolaom_dilemmas(folder="lolaom_dilemmas/"):
     path_to_folder = WORKING_DIR + folder
     path_to_config = WORKING_DIR + "config.json"
 
     num_rollouts = [25, 50, 75, 100]
     rollout_lengths = [20, 50, 100, 150]
-    # num_rollouts = [5, 5]
-    # rollout_lengths = [10, 20]
-    repeats = 50
-    epochs = 200
+    num_rollouts = [5, 5]
+    rollout_lengths = [10, 20]
+    repeats = 5
+    epochs = 2
 
     wall_time_offset = 15*60
     factor = 0.0145*2
@@ -137,6 +140,46 @@ def lolaom_dilemmas(folder="lolaom_dilemmas/"):
             invoke_dilemmas_qsubs(sub_folder, flags, params, epochs, agent_pair=agent_pair, walltime=wall_time)
 
 
-if __name__ == "__main__":
-    lolaom_dilemmas()
+def lolaom_ST_space(folder="lolaom_ST_space/"):
+    path_to_folder = WORKING_DIR + folder
+    path_to_config = WORKING_DIR + "config.json"
 
+    R = 1.0
+    P = 0.0
+    S = np.linspace(-1.0, 1.0, num=9)
+    T = np.linspace(0.0, 2.0, num=9)
+
+    repeats = 50
+    num = 50
+    length = 50
+    epochs = 200
+
+    # repeats = 5
+    # num = 5
+    # length = 5
+    # epochs = 2
+
+    wall_time_offset = 60*60
+    factor = 0
+    agent_pair = "lolaom_vs_lolaom"
+    game = "IPD"
+
+    for i, s in enumerate(S):
+        for j, t in enumerate(T):
+            sub_folder = path_to_folder + "S{0:02d}xT{1:02d}/".format(i, j)
+            os.makedirs(sub_folder, exist_ok=True)
+            wall_time = humanize_time(wall_time_offset + factor * (num*length - 25.0*20) * repeats)
+            flags = ["-o", sub_folder, "-i", path_to_config]
+            params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats)),
+                      """'agent_pairs.{0}.rollout_length = {1}'""".format(agent_pair, length),
+                      """'agent_pairs.{0}.num_rollout = {1}'""".format(agent_pair, num),
+                      """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
+                      """'games.{0}.payoff1 = {1}'""".format(game, json.dumps([R, s, t, P])),
+                      """'games.{0}.payoff2 = {1}'""".format(game, json.dumps([R, t, s, P]))]
+            invoke_dilemma_qsubs(game, sub_folder, flags, params, epochs, agent_pair=agent_pair, walltime=wall_time)
+
+
+if __name__ == "__main__":
+    lolaom_ST_space()
+    # lolaom_dilemmas()
+    pass

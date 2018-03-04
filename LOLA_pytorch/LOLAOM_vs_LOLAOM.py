@@ -108,6 +108,7 @@ class LOLAOM_VS_LOLAOM(AgentPair):
 
     def run(self, seed):
         super(LOLAOM_VS_LOLAOM, self).run(seed)
+        # print(self.parameters)
         return run(**self.parameters)
 
 
