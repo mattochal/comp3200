@@ -143,11 +143,117 @@ def lolaom_ST_space(folder="lolaom_ST_space/"):
             sorted_results[i][j] = np.array(X)
 
     plot_policies(np.array(sorted_results), keys, "How the S and T affect the final policy "
-                                                  "of the agents in the {0} game".format(game),
+                                                  "of the agents in across the dilemmas",
                   show=False, figsize=(30, 30), colours=colours)
 
 
+def lolaom_rollouts_small(folder="lolaom_rollouts_small/"):
+    game = "IPD"
+    # game = "ISD"
+    # game = "ISH"
+    results = get_collective_policies(folder, "*{0}.json".format(game))
+
+    nums = [5, 10, 15, 20]
+    lengths = [5, 10, 15, 20]
+    keys = [["n={0}, l={1}".format(n, l) for l in lengths] for n in nums]
+
+    sorted_results = [[None for _ in lengths] for _ in nums]
+
+    def index(filename):
+        folder = filename.split('/')[1]
+        num_len = folder.split('x')
+        return nums.index(int(num_len[0])), lengths.index(int(num_len[1]))
+
+    for filename, X in results.items():
+        i, j = index(filename)
+        if game in filename:
+            sorted_results[i][j] = X
+
+    plot_policies(np.array(sorted_results), keys, "How the number and length of rollouts affects the final policy "
+                                                  "of the agents in the {0} game".format(game))
+
+
+def lolaom_IPD_SG_space(folder="lolaom_IPD_SG_space/"):
+    game = "IPD"
+    results = get_collective_policies(folder, "*{0}.json".format(game))
+
+    S = np.linspace(-1.0, 0.0, num=9)
+    Gammas = np.linspace(0.0, 1.0, num=11)
+    Gammas[10] = 0.99
+
+    keys = [["S={0:.2f}, gamma={1:.2f}".format(s, g) for g in Gammas] for s in S]
+    sorted_results = [[None for _ in Gammas] for _ in S]
+
+    def index(filename):
+        folder = filename.split('/')[1]
+        s_t = folder.split('x')
+        return int(s_t[0][1:]), int(s_t[1][1:])
+
+    for filename, X in results.items():
+        i, j = index(filename)
+        if game in filename:
+            sorted_results[i][j] = np.array(X)
+
+    plot_policies(np.array(sorted_results), keys,
+                  "How the S and gamma affects the final policy of the agents in the {0} game".format(game),
+                  show=False, figsize=(30, 30))
+
+
+def lolaom_policy_init(folder="lolaom_policy_init/"):
+    game = "IPD"
+    results = get_collective_policies(folder, "*{0}.json".format(game))
+
+    theta1 = np.linspace(0.0, 1.0, num=9)
+    theta2 = np.linspace(0.0, 1.0, num=9)
+
+    keys = [["theta2_i={0:.2f}, theta1_i={1:.2f}".format(t2, t1) for t1 in theta1] for t2 in theta2]
+    sorted_results = [[None for _ in theta1] for _ in theta2]
+
+    def index(filename):
+        folder = filename.split('/')[1]
+        s_t = folder.split('x')
+        return int(s_t[0][1:]), int(s_t[1][1:])
+
+    for filename, X in results.items():
+        i, j = index(filename)
+        if game in filename:
+            sorted_results[i][j] = np.array(X)
+
+    plot_policies(np.array(sorted_results), keys,
+                  "How the initial policy parameters affects the final policy of the agents in the {0} game".format(game),
+                  show=False, figsize=(30, 30))
+
+
+def lolaom_random_init_long_epochs(folder="lolaom_random_init_long_epochs/"):
+    game = "IPD"
+    results = get_collective_policies(folder, "*{0}.json".format(game))
+
+    theta1 = np.linspace(0.0, 1.0, num=9)
+    theta2 = np.linspace(0.0, 1.0, num=9)
+
+    keys = [["theta2_i={0:.2f}, theta1_i={1:.2f}".format(t2, t1) for t1 in theta1] for t2 in theta2]
+    sorted_results = [[None for _ in theta1] for _ in theta2]
+
+    def index(filename):
+        folder = filename.split('/')[1]
+        s_t = folder.split('x')
+        return int(s_t[0][1:]), int(s_t[1][1:])
+
+    for filename, X in results.items():
+        i, j = index(filename)
+        if game in filename:
+            sorted_results[i][j] = np.array(X)
+
+    plot_policies(np.array(sorted_results), keys,
+                  "How the initial policy parameters affects the final policy of the agents in the {0} game".format(game),
+                  show=False, figsize=(30, 30))
+
+
 if __name__ == "__main__":
-    lolaom_dilemmas()
+    # lolaom_dilemmas()
     # lolaom_ST_space()
+    lolaom_IPD_SG_space()
+    # lolaom_policy_init()
+    # lolaom_rollouts_small()
     pass
+

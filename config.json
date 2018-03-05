@@ -16,12 +16,12 @@
 
     },
     "lola_vs_lola": {
-      "gamma":0.8,
+      "gamma":0.96,
       "delta":0.1,
       "eta":10
     },
     "lolaom_vs_lolaom": {
-      "gamma":0.8,
+      "gamma":0.96,
       "delta":0.1,
       "eta":10,
       "rollout_length":50,

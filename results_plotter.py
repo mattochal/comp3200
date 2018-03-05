@@ -17,6 +17,16 @@ def get_policies(results):
     return np.array(policies)
 
 
+def get_epoch_policies(results):
+    ps = []
+    for experiment in results["results"]["seeds"]:
+        p = []
+        for epoch in experiment["epoch"]:
+            p.append([epoch["P1"], epoch["P2"]])
+        ps.append(p)
+    return np.array(ps)
+
+
 def plot_policies(results):
     fig, ax = plt.subplots()
     X = get_policies(results)
@@ -74,11 +84,36 @@ def plot_average_value(path):
     plt.show()
 
 
+def plot_connected_policy_dots(path):
+    results = load_results(path)
+    X = get_epoch_policies(results)[:5]
+    # np.shape(X) = [repeats, epochs, # of players = 2, # of states = 5]
+
+    fig, ax = plt.subplots()
+
+    colors = ["purple", "blue", "orange", "green", "red"]
+    state = ["s0", "CC", "CD", "DC", "DD"]
+
+    for s in range(5):
+        ax.scatter(X[:, -1, 0, s], X[:, -1, 1, s], s=25, c=colors[s], alpha=0.5, label=state[s])
+
+    for repeat in X:
+        for s in range(5):
+            ax.plot(repeat[:, 0, s], repeat[:, 1, s], c=colors[s], alpha=0.5)
+
+    plt.title(results["config"]["simulation"]["agent_pair"] + " in " + results["config"]["simulation"]["game"])
+    plt.xlabel('P(cooperation | state) for agent 0')
+    plt.ylabel('P(cooperation | state) for agent 1')
+    ax.legend(loc='best', shadow=True)
+    plt.show()
+
+
 def plot_single_sim_run(path):
     results = load_results(path)
     plot_policies(results)
 
 
 if __name__ == "__main__":
-    plot_single_sim_run("lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
+    # plot_single_sim_run("lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
+    plot_connected_policy_dots("lolaom_ST_space/S03xT07/result_lolaom_vs_lolaom_IPD.json")
     # plot_average_value("result_lolaom_vs_lolaom_IPD.json")

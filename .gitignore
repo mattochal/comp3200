@@ -7,11 +7,17 @@ lolaom_ST_space/
 lolaom_IPD_SG_space/
 lolaom_policy_init/
 lolaom_rollouts_small/
+lolaom_random_init_long_epochs/
+lolaom_long_epochs/
 
 lolaom_ST_space.zip
 lolaom_dilemmas.zip
 lolaom_IPD_SG_space.zip
 lolaom_policy_init.zip
 lolaom_rollouts_small.zip
+lolaom_random_init_long_epochs.zip
+lolaom_long_epochs.zip
 
 How the S and T affect the final policy of the agents in the IPD game.pdf
+How the S and gamma affects the final policy of the agents in the IPD game.pdf
+How the initial policy parameters affects the final policy of the agents in the IPD game.pdf

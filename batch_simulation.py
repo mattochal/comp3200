@@ -260,10 +260,88 @@ def lolaom_policy_init(folder="lolaom_policy_init/"):
             invoke_dilemma_qsubs(game, sub_folder, flags, params, epochs, agent_pair=agent_pair, walltime=wall_time)
 
 
+def lolaom_random_init_long_epochs(folder="lolaom_random_init_long_epochs/"):
+    path_to_folder = WORKING_DIR + folder
+    path_to_config = WORKING_DIR + "config.json"
+
+    ETA = [0.01, 0.1, 0.5, 1.0, 5, 7.5, 10, 15]
+    DELTA = [0.0005, 0.001, 0.01, 0.1, 0.25, 0.5, 1.0, 3.0]
+
+    repeats = 50
+    num = 50
+    length = 50
+    epochs = 1500
+
+    # repeats = 5
+    # num = 5
+    # length = 5
+    # epochs = 2
+
+    wall_time_offset = 6 * 60 * 60
+    factor = 0
+    agent_pair = "lolaom_vs_lolaom"
+    game = "IPD"
+
+    for i, eta in enumerate(ETA):
+        for j, delta in enumerate(DELTA):
+            sub_folder = path_to_folder + "E{0:02d}xD{1:02d}/".format(i, j)
+            os.makedirs(sub_folder, exist_ok=True)
+            wall_time = humanize_time(wall_time_offset + factor * (num * length - 25.0 * 20) * repeats)
+            flags = ["-o", sub_folder, "-i", path_to_config]
+            params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats)),
+                      """'agent_pairs.{0}.rollout_length = {1}'""".format(agent_pair, length),
+                      """'agent_pairs.{0}.num_rollout = {1}'""".format(agent_pair, num),
+                      """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
+                      """'agent_pairs.{0}.eta = {1}'""".format(agent_pair, eta),
+                      """'agent_pairs.{0}.delta = {1}'""".format(agent_pair, delta),
+                      """'games.{0}.init_policy1 = {1}'""".format(game, json.dumps([None] * 5)),
+                      """'games.{0}.init_policy2 = {1}'""".format(game, json.dumps([None] * 5))]
+            invoke_dilemma_qsubs(game, sub_folder, flags, params, epochs, agent_pair=agent_pair, walltime=wall_time)
+
+def lolaom_long_epochs(folder="lolaom_long_epochs/"):
+    path_to_folder = WORKING_DIR + folder
+    path_to_config = WORKING_DIR + "config.json"
+
+    ETA = [0.01, 0.1, 0.5, 1.0, 5, 7.5, 10, 15]
+    DELTA = [0.0005, 0.001, 0.01, 0.1, 0.25, 0.5, 1.0, 3.0]
+
+    repeats = 50
+    num = 50
+    length = 50
+    epochs = 1000
+
+    # repeats = 5
+    # num = 5
+    # length = 5
+    # epochs = 2
+
+    wall_time_offset = 4 * 60 * 60
+    factor = 0
+    agent_pair = "lolaom_vs_lolaom"
+    game = "IPD"
+
+    for i, eta in enumerate(ETA):
+        for j, delta in enumerate(DELTA):
+            sub_folder = path_to_folder + "E{0:02d}xD{1:02d}/".format(i, j)
+            os.makedirs(sub_folder, exist_ok=True)
+            wall_time = humanize_time(wall_time_offset + factor * (num * length - 25.0 * 20) * repeats)
+            flags = ["-o", sub_folder, "-i", path_to_config]
+            params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats)),
+                      """'agent_pairs.{0}.rollout_length = {1}'""".format(agent_pair, length),
+                      """'agent_pairs.{0}.num_rollout = {1}'""".format(agent_pair, num),
+                      """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
+                      """'agent_pairs.{0}.eta = {1}'""".format(agent_pair, eta),
+                      """'agent_pairs.{0}.delta = {1}'""".format(agent_pair, delta),
+                      """'games.{0}.init_policy1 = {1}'""".format(game, json.dumps([0.5] * 5)),
+                      """'games.{0}.init_policy2 = {1}'""".format(game, json.dumps([0.5] * 5))]
+            invoke_dilemma_qsubs(game, sub_folder, flags, params, epochs, agent_pair=agent_pair, walltime=wall_time)
+
 if __name__ == "__main__":
     # lolaom_ST_space()
     # lolaom_dilemmas()
-    lolaom_IPD_SG_space()
-    lolaom_policy_init()
-    lolaom_rollouts_small()
+    # lolaom_IPD_SG_space()
+    # lolaom_policy_init()
+    # lolaom_rollouts_small()
+    lolaom_random_init_long_epochs()
+    lolaom_long_epochs()
     pass

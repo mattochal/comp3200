@@ -3,17 +3,24 @@ from LOLA_pytorch.IPD_game import av_return
 from LOLA_pytorch.IPD_modeling import policy_param_estimation_from_rollouts
 from torch.autograd import Variable
 import numpy as np
-
 from agent_pair import AgentPair
 
 
 def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2],
         gamma=0.8, delta=0.1, eta=10, rollout_length=25, num_rollout=25,
-        init_policy1=[0.5, 0.5, 0.5, 0.5, 0.5], init_policy2 = [0.5, 0.5, 0.5, 0.5, 0.5]):
+        init_policy1=[0.5, 0.5, 0.5, 0.5, 0.5], init_policy2=[0.5, 0.5, 0.5, 0.5, 0.5]):
 
     dtype = torch.FloatTensor
 
     result = {"epoch": []}
+
+    for i, p in enumerate(init_policy1):
+        if p is None:
+            init_policy1[i] = np.random.random()
+
+    for i, p in enumerate(init_policy2):
+        if p is None:
+            init_policy2[i] = np.random.random()
 
     init_policy1 = np.array(init_policy1, dtype="f")
     init_policy2 = np.array(init_policy2, dtype="f")
