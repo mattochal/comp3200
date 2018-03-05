@@ -148,4 +148,6 @@ def lolaom_ST_space(folder="lolaom_ST_space/"):
 
 
 if __name__ == "__main__":
-    lolaom_ST_space()
+    lolaom_dilemmas()
+    # lolaom_ST_space()
+    pass

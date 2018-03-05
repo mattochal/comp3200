@@ -112,19 +112,20 @@ def invoke_dilemma_qsubs(d, output_stream, other_flags, params, epochs, agent_pa
     invoke_qsub("simulation.py", flags, output_stream + "" + agent_pair + "_" + d, walltime)
 
 
-def lolaom_dilemmas(folder="lolaom_dilemmas/"):
+def lolaom_rollouts_small(folder="lolaom_rollouts_small/"):
+    lolaom_dilemmas(folder, num_rollouts=[5, 10, 15, 20], rollout_lengths=[5, 10, 15, 20], factor=0.0)
+
+
+def lolaom_dilemmas(folder="lolaom_dilemmas/", num_rollouts=[25, 50, 75, 100], rollout_lengths = [20, 50, 100, 150], factor=0.029):
     path_to_folder = WORKING_DIR + folder
     path_to_config = WORKING_DIR + "config.json"
 
-    num_rollouts = [25, 50, 75, 100]
-    rollout_lengths = [20, 50, 100, 150]
     # num_rollouts = [5, 5]
     # rollout_lengths = [10, 20]
     repeats = 50
     epochs = 200
 
     wall_time_offset = 15*60
-    factor = 0.0145*2
     agent_pair = "lolaom_vs_lolaom"
 
     for num in num_rollouts:
@@ -189,16 +190,16 @@ def lolaom_IPD_SG_space(folder="lolaom_IPD_SG_space/"):
     T = 2.0
 
     Gammas = np.linspace(0.0, 1.0, num=11)
-    Gammas[5] = 0.99  # if 1 then singular matrix - not good
+    Gammas[10] = 0.99  # if 1 then singular matrix - not good
 
     repeats = 50
     num = 50
     length = 50
     epochs = 200
 
-    # repeats = 5
-    # num = 5
-    # length = 5
+    # repeats = 2
+    # num = 2
+    # length = 2
     # epochs = 2
 
     wall_time_offset = 60 * 60
@@ -264,4 +265,5 @@ if __name__ == "__main__":
     # lolaom_dilemmas()
     lolaom_IPD_SG_space()
     lolaom_policy_init()
+    lolaom_rollouts_small()
     pass
