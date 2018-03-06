@@ -50,9 +50,9 @@ def main(args):
         agent_pair = agent_pair_class(config["agent_pairs"][agent_pair_name], config["games"][game])
         _, _, result = agent_pair.run(seed=seed)
         results["results"]["seeds"].append(result)
-        print("\tRun took: ", time.time() - start_time, "ms")
+        print("\tRun took: ", time.time() - start_time, "sec")
 
-    save_results(results, args.output_folder + "result_" + agent_pair_name + "_" + game + ".json")
+    save_results(results, args.output_folder + agent_pair_name + "_" + game + ".json")
 
 
 if __name__ == "__main__":
@@ -61,7 +61,7 @@ if __name__ == "__main__":
                         help='parameters which override the config file, '
                              'put each overriding parameter in separate quotes, '
                              '\'tasks.arrival.distribution={"name" : "poisson", "param" : [0.1] }\'')
-    parser.add_argument("-o", "--output_folder", help="output file", default="")
+    parser.add_argument("-o", "--output_folder", help="output file", default="results/")
     parser.add_argument("-i", "--input", help="input config file in Json format", default="config.json")
     args = parser.parse_args(sys.argv[1:])
     # print(sys.argv)

@@ -18,7 +18,9 @@
     "lola_vs_lola": {
       "gamma":0.96,
       "delta":0.1,
-      "eta":10
+      "eta":10,
+      "rollout_length":50,
+      "num_rollout":50
     },
     "lolaom_vs_lolaom": {
       "gamma":0.96,
@@ -59,7 +61,7 @@
 
   "simulation": {
     "agent_pair": "lolaom_vs_lolaom",
-    "game": "ISD",
+    "game": "IPD",
     "repeats": 25,
     "seed_start": 0
   }

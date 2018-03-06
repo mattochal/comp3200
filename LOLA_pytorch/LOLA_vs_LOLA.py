@@ -5,14 +5,29 @@ import numpy as np
 from agent_pair import AgentPair
 
 
-def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10):
+def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10,
+        init_policy1=[0.5, 0.5, 0.5, 0.5, 0.5], init_policy2=[0.5, 0.5, 0.5, 0.5, 0.5],
+        rollout_length="not used but needed", num_rollout="not used but needed"):
+
     dtype = torch.FloatTensor
 
-    # parameters, theta of agent 1 - LOLA LEARNER
-    y1 = Variable(torch.zeros(5, 1).type(dtype), requires_grad=True)
+    result = {"epoch": []}
 
-    # parameters, theta of agent 2 - LOLA LEARNER
-    y2 = Variable(torch.zeros(5, 1).type(dtype), requires_grad=True)
+    for i, p in enumerate(init_policy1):
+        if p is None:
+            init_policy1[i] = np.random.random()
+
+    for i, p in enumerate(init_policy2):
+        if p is None:
+            init_policy2[i] = np.random.random()
+
+    init_policy1 = np.array(init_policy1, dtype="f")
+    init_policy2 = np.array(init_policy2, dtype="f")
+    y1 = np.log(np.divide(init_policy1, 1 - init_policy1)).reshape((5, 1))
+    y2 = np.log(np.divide(init_policy2, 1 - init_policy2)).reshape((5, 1))
+
+    y1 = Variable(torch.from_numpy(y1).float(), requires_grad=True)
+    y2 = Variable(torch.from_numpy(y2).float(), requires_grad=True)
 
     # Define rewards
     r1 = Variable(torch.Tensor(payoff1).type(dtype))
@@ -65,6 +80,11 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
         # Update for LOLA agent
         y2.data += (delta * dV2[1] + delta * eta * torch.matmul(d2V1Tensor, dV2[0])).data
 
+        result["epoch"].append({"V1": np.squeeze(V1.data.cpu().numpy()).tolist(),
+                                "V2": np.squeeze(V2.data.cpu().numpy()).tolist(),
+                                "P1": np.squeeze(x1.data.cpu().numpy()).tolist(),
+                                "P2": np.squeeze(x2.data.cpu().numpy()).tolist()})
+
         if epoch % 20 == 0 and visualise:
             print('Epoch: ' + str(epoch))
             print("x1: {}".format(x1.data.cpu().numpy().tolist()))
@@ -74,14 +94,17 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
             print("Rewards: {}".format(av_return(x1, x2)))
 
     # return policy of both agents
-    return torch.sigmoid(y1), torch.sigmoid(y2)
+    p1, p2 = torch.sigmoid(y1), torch.sigmoid(y2),
+    result["P1"] = np.squeeze(p1.data.cpu().numpy()).tolist()
+    result["P2"] = np.squeeze(p2.data.cpu().numpy()).tolist()
+    return p1, p2, result
 
 
 class LOLA_VS_LOLA(AgentPair):
 
     def run(self, seed):
         super(LOLA_VS_LOLA, self).run(seed)
-        return run(*self.parameters)
+        return run(**self.parameters)
 
 
 if __name__ == "__main__":

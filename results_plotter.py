@@ -114,6 +114,6 @@ def plot_single_sim_run(path):
 
 
 if __name__ == "__main__":
-    # plot_single_sim_run("lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
-    plot_connected_policy_dots("lolaom_ST_space/S03xT07/result_lolaom_vs_lolaom_IPD.json")
-    # plot_average_value("result_lolaom_vs_lolaom_IPD.json")
+    # plot_single_sim_run("results/lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
+    plot_connected_policy_dots("results/lolaom_ST_space/S03xT07/result_lolaom_vs_lolaom_IPD.json")
+    # plot_average_value("results/result_lolaom_vs_lolaom_IPD.json")

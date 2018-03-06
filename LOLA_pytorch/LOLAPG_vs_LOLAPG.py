@@ -2,24 +2,34 @@ import torch
 from IPD_game import av_return
 from IPD_rollouts import get_rollouts
 from torch.autograd import Variable
+import numpy as np
 
 
-def run(n=3000, visualise=False):
+def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10,
+        init_policy1=[0.5, 0.5, 0.5, 0.5, 0.5], init_policy2=[0.5, 0.5, 0.5, 0.5, 0.5],
+        rollout_length="not used but needed", num_rollout="not used but needed"):
+
     dtype = torch.FloatTensor
 
-    # ######################################
-    # LOLA-PG is based on trajectories
-    # ######################################
+    for i, p in enumerate(init_policy1):
+        if p is None:
+            init_policy1[i] = np.random.random()
 
-    # parameters, theta of agent 1 - NAIVE LEARNER
-    y1 = Variable(torch.zeros(5, 1).type(dtype), requires_grad=True)
+    for i, p in enumerate(init_policy2):
+        if p is None:
+            init_policy2[i] = np.random.random()
 
-    # parameters, theta of agent 2 - NAIVE LEARNER
-    y2 = Variable(torch.zeros(5, 1).type(dtype), requires_grad=True)
+    init_policy1 = np.array(init_policy1, dtype="f")
+    init_policy2 = np.array(init_policy2, dtype="f")
+    y1 = np.log(np.divide(init_policy1, 1 - init_policy1)).reshape((5, 1))
+    y2 = np.log(np.divide(init_policy2, 1 - init_policy2)).reshape((5, 1))
+
+    y1 = Variable(torch.from_numpy(y1).float(), requires_grad=True)
+    y2 = Variable(torch.from_numpy(y2).float(), requires_grad=True)
 
     # Define rewards
-    r1 = Variable(torch.Tensor([0, -3, -1, -2]).type(dtype))
-    r2 = Variable(torch.Tensor([0, -1, -3, -2]).type(dtype))
+    r1 = Variable(torch.Tensor(payoff1).type(dtype))
+    r2 = Variable(torch.Tensor(payoff2).type(dtype))
 
     # Identity matrix
     I = Variable(torch.eye(4).type(dtype))
