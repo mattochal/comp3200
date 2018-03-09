@@ -36,7 +36,7 @@ def get_collective_policies(folder, pattern='*.json'):
     return results
 
 
-def lolaom_dilemmas(folder="lolaom_dilemmas/"):
+def lolaom_dilemmas(folder="results/lolaom_dilemmas/"):
     game = "IPD"
     # game = "ISD"
     # game = "ISH"
@@ -49,7 +49,7 @@ def lolaom_dilemmas(folder="lolaom_dilemmas/"):
     sorted_results = [[None for _ in lengths] for _ in nums]
 
     def index(filename):
-        folder = filename.split('/')[1]
+        folder = filename.split('/')[2]
         num_len = folder.split('x')
         return nums.index(int(num_len[0])), lengths.index(int(num_len[1]))
 
@@ -108,7 +108,7 @@ def plot_policies(results, keys, title, show=True, figsize=(13, 8), colours=None
         plt.savefig(title+".pdf")
 
 
-def lolaom_ST_space(folder="lolaom_ST_space/"):
+def lolaom_ST_space(folder="results/lolaom_ST_space/"):
     game = "IPD"
     results = get_collective_policies(folder, "*{0}.json".format(game))
 
@@ -133,7 +133,7 @@ def lolaom_ST_space(folder="lolaom_ST_space/"):
             colours[i][j] = color_dict[d_type]
 
     def index(filename):
-        folder = filename.split('/')[1]
+        folder = filename.split('/')[2]
         s_t = folder.split('x')
         return int(s_t[0][1:]), int(s_t[1][1:])
 
@@ -147,7 +147,7 @@ def lolaom_ST_space(folder="lolaom_ST_space/"):
                   show=False, figsize=(30, 30), colours=colours)
 
 
-def lolaom_rollouts_small(folder="lolaom_rollouts_small/"):
+def lolaom_rollouts_small(folder="results/lolaom_rollouts_small/"):
     game = "IPD"
     # game = "ISD"
     # game = "ISH"
@@ -160,7 +160,7 @@ def lolaom_rollouts_small(folder="lolaom_rollouts_small/"):
     sorted_results = [[None for _ in lengths] for _ in nums]
 
     def index(filename):
-        folder = filename.split('/')[1]
+        folder = filename.split('/')[2]
         num_len = folder.split('x')
         return nums.index(int(num_len[0])), lengths.index(int(num_len[1]))
 
@@ -173,7 +173,7 @@ def lolaom_rollouts_small(folder="lolaom_rollouts_small/"):
                                                   "of the agents in the {0} game".format(game))
 
 
-def lolaom_IPD_SG_space(folder="lolaom_IPD_SG_space/"):
+def lolaom_IPD_SG_space(folder="results/lolaom_IPD_SG_space/"):
     game = "IPD"
     results = get_collective_policies(folder, "*{0}.json".format(game))
 
@@ -185,7 +185,7 @@ def lolaom_IPD_SG_space(folder="lolaom_IPD_SG_space/"):
     sorted_results = [[None for _ in Gammas] for _ in S]
 
     def index(filename):
-        folder = filename.split('/')[1]
+        folder = filename.split('/')[2]
         s_t = folder.split('x')
         return int(s_t[0][1:]), int(s_t[1][1:])
 
@@ -199,7 +199,7 @@ def lolaom_IPD_SG_space(folder="lolaom_IPD_SG_space/"):
                   show=False, figsize=(30, 30))
 
 
-def lolaom_policy_init(folder="lolaom_policy_init/"):
+def lolaom_policy_init(folder="results/lolaom_policy_init/"):
     game = "IPD"
     results = get_collective_policies(folder, "*{0}.json".format(game))
 
@@ -210,7 +210,7 @@ def lolaom_policy_init(folder="lolaom_policy_init/"):
     sorted_results = [[None for _ in theta1] for _ in theta2]
 
     def index(filename):
-        folder = filename.split('/')[1]
+        folder = filename.split('/')[2]
         s_t = folder.split('x')
         return int(s_t[0][1:]), int(s_t[1][1:])
 
@@ -224,20 +224,20 @@ def lolaom_policy_init(folder="lolaom_policy_init/"):
                   show=False, figsize=(30, 30))
 
 
-def lolaom_random_init_long_epochs(folder="lolaom_random_init_long_epochs/"):
+def lolaom_long_epochs(folder="results/lolaom_long_epochs/"):
     game = "IPD"
     results = get_collective_policies(folder, "*{0}.json".format(game))
 
-    theta1 = np.linspace(0.0, 1.0, num=9)
-    theta2 = np.linspace(0.0, 1.0, num=9)
+    ETA = [0.01, 0.1, 0.5, 1.0, 5, 7.5, 10, 15]
+    DELTA = [0.0005, 0.001, 0.01, 0.1, 0.25, 0.5, 1.0, 3.0]
 
-    keys = [["theta2_i={0:.2f}, theta1_i={1:.2f}".format(t2, t1) for t1 in theta1] for t2 in theta2]
-    sorted_results = [[None for _ in theta1] for _ in theta2]
+    keys = [["E={0:.4f}, D={1:.4f}".format(e, d) for d in DELTA] for e in ETA]
+    sorted_results = [[None for _ in DELTA] for _ in ETA]
 
     def index(filename):
-        folder = filename.split('/')[1]
-        s_t = folder.split('x')
-        return int(s_t[0][1:]), int(s_t[1][1:])
+        folder = filename.split('/')[2]
+        e_d = folder.split('x')
+        return int(e_d[0][1:]), int(e_d[1][1:])
 
     for filename, X in results.items():
         i, j = index(filename)
@@ -245,15 +245,47 @@ def lolaom_random_init_long_epochs(folder="lolaom_random_init_long_epochs/"):
             sorted_results[i][j] = np.array(X)
 
     plot_policies(np.array(sorted_results), keys,
-                  "How the initial policy parameters affects the final policy of the agents in the {0} game".format(game),
+                  "results/How delta and eta affect the final policy of the agents in the {0} game".format(game),
                   show=False, figsize=(30, 30))
+
+
+def lolaom_random_init_long_epochs(folder="results/lolaom_random_init_long_epochs/"):
+    game = "IPD"
+    results = get_collective_policies(folder, "*{0}.json".format(game))
+
+    ETA = [0.01, 0.1, 0.5, 1.0, 5, 7.5, 10, 15]
+    DELTA = [0.0005, 0.001, 0.01, 0.1, 0.25, 0.5, 1.0, 3.0]
+
+    keys = [["E={0:.4f}, D={1:.4f}".format(e, d) for d in DELTA] for e in ETA]
+    sorted_results = [[None for _ in DELTA] for _ in ETA]
+
+    def index(filename):
+        folder = filename.split('/')[2]
+        e_d = folder.split('x')
+        return int(e_d[0][1:]), int(e_d[1][1:])
+
+    for filename, X in results.items():
+        i, j = index(filename)
+        if game in filename:
+            sorted_results[i][j] = np.array(X)
+
+    plot_policies(np.array(sorted_results), keys,
+                  "results/How delta and eta affect the final policy of the LOLAOM agents in the {0} game "
+                  "with random parameter initialisation".format(game),
+                  show=False, figsize=(40, 40))
+
+
+def lola_random_init_long_epochs(folder="results/lola_random_init_long_epochs/"):
+    lolaom_random_init_long_epochs(folder)
 
 
 if __name__ == "__main__":
     # lolaom_dilemmas()
     # lolaom_ST_space()
-    lolaom_IPD_SG_space()
+    # lolaom_IPD_SG_space()
     # lolaom_policy_init()
     # lolaom_rollouts_small()
+    lolaom_random_init_long_epochs()
+    lola_random_init_long_epochs()
     pass
 

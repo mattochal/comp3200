@@ -3,7 +3,7 @@ from LOLA_pytorch.IPD_game import av_return
 from torch.autograd import Variable
 import numpy as np
 from agent_pair import AgentPair
-
+import random
 
 def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10,
         init_policy1=[0.5, 0.5, 0.5, 0.5, 0.5], init_policy2=[0.5, 0.5, 0.5, 0.5, 0.5],
@@ -13,16 +13,9 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
 
     result = {"epoch": []}
 
-    for i, p in enumerate(init_policy1):
-        if p is None:
-            init_policy1[i] = np.random.random()
-
-    for i, p in enumerate(init_policy2):
-        if p is None:
-            init_policy2[i] = np.random.random()
-
     init_policy1 = np.array(init_policy1, dtype="f")
     init_policy2 = np.array(init_policy2, dtype="f")
+
     y1 = np.log(np.divide(init_policy1, 1 - init_policy1)).reshape((5, 1))
     y2 = np.log(np.divide(init_policy2, 1 - init_policy2)).reshape((5, 1))
 
@@ -49,13 +42,15 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
         x1 = torch.sigmoid(y1)
         x2 = torch.sigmoid(y2)
 
-        # State transition function
+        # State transition function, where axis = 1
         P = torch.cat((x1 * x2, x1 * (1 - x2), (1 - x1) * x2, (1 - x1) * (1 - x2)), 1)
 
-        # This is just the rearrangement of equation found in D. Silver's L2 p25
+        # This is just the rearrangement of equations found in D. Silver's L2 p25
+        # Ignoring the s0 state
         Zinv = torch.inverse(I - gamma * P[1:, :])
 
         # These are the exact value functions of the agent 1 and 2
+        # as a sum of the expected average reward given the probability of cooperation in state s0
         V1 = torch.matmul(torch.matmul(P[0, :], Zinv), r1)
         V2 = torch.matmul(torch.matmul(P[0, :], Zinv), r2)
 

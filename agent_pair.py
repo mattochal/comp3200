@@ -14,6 +14,6 @@ class AgentPair:
         TO IMPLEMENT by child class
         returns a json dictionary of results
         """
-        np.random.seed(seed=seed)
+        # np.random.seed(seed=seed)
         return {}
 

@@ -86,20 +86,22 @@ def plot_average_value(path):
 
 def plot_connected_policy_dots(path):
     results = load_results(path)
-    X = get_epoch_policies(results)[:5]
+    X = get_epoch_policies(results)[:50]
     # np.shape(X) = [repeats, epochs, # of players = 2, # of states = 5]
 
     fig, ax = plt.subplots()
+
+    depth = 20
 
     colors = ["purple", "blue", "orange", "green", "red"]
     state = ["s0", "CC", "CD", "DC", "DD"]
 
     for s in range(5):
-        ax.scatter(X[:, -1, 0, s], X[:, -1, 1, s], s=25, c=colors[s], alpha=0.5, label=state[s])
+        ax.scatter(X[:, depth-1, 0, s], X[:, depth-1, 1, s], s=25, c=colors[s], alpha=0.5, label=state[s])
 
     for repeat in X:
         for s in range(5):
-            ax.plot(repeat[:, 0, s], repeat[:, 1, s], c=colors[s], alpha=0.5)
+            ax.plot(repeat[:depth, 0, s], repeat[:depth, 1, s], c=colors[s], alpha=0.5)
 
     plt.title(results["config"]["simulation"]["agent_pair"] + " in " + results["config"]["simulation"]["game"])
     plt.xlabel('P(cooperation | state) for agent 0')
@@ -115,5 +117,5 @@ def plot_single_sim_run(path):
 
 if __name__ == "__main__":
     # plot_single_sim_run("results/lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
-    plot_connected_policy_dots("results/lolaom_ST_space/S03xT07/result_lolaom_vs_lolaom_IPD.json")
+    plot_connected_policy_dots("results/lola_random_init_long_epochs/E00xD00/lola_vs_lola_IPD.json")
     # plot_average_value("results/result_lolaom_vs_lolaom_IPD.json")

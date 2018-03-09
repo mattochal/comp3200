@@ -4,6 +4,7 @@ from LOLA_pytorch.IPD_modeling import policy_param_estimation_from_rollouts
 from torch.autograd import Variable
 import numpy as np
 from agent_pair import AgentPair
+import random
 
 
 def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2],
@@ -14,16 +15,9 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
 
     result = {"epoch": []}
 
-    for i, p in enumerate(init_policy1):
-        if p is None:
-            init_policy1[i] = np.random.random()
-
-    for i, p in enumerate(init_policy2):
-        if p is None:
-            init_policy2[i] = np.random.random()
-
     init_policy1 = np.array(init_policy1, dtype="f")
     init_policy2 = np.array(init_policy2, dtype="f")
+
     y1 = np.log(np.divide(init_policy1, 1 - init_policy1)).reshape((5, 1))
     y2 = np.log(np.divide(init_policy2, 1 - init_policy2)).reshape((5, 1))
 

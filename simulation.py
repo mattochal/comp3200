@@ -4,6 +4,8 @@ from LOLA_pytorch.LOLA_vs_LOLA import LOLA_VS_LOLA
 from LOLA_pytorch.LOLAOM_vs_LOLAOM import LOLAOM_VS_LOLAOM
 import time
 import sys, os
+import random
+import numpy as np
 
 
 def load_config(args_to_sub, path="config.json"):
@@ -40,17 +42,36 @@ def main(args):
     game = config["simulation"]["game"]
     agent_pair_name = config["simulation"]["agent_pair"]
 
+    np.random.seed(random.randint(0, 10000000))
+    init_policy1_conf = config["games"][game]["init_policy1"][:]
+    init_policy2_conf = config["games"][game]["init_policy2"][:]
+
     print("Running:", agent_pair_name, game)
-    for i in range(config["simulation"]["repeats"]):
+    for j in range(config["simulation"]["repeats"]):
+        init_policy1 = config["games"][game]["init_policy1"]
+        init_policy2 = config["games"][game]["init_policy2"]
+
+        for i, p in enumerate(init_policy1_conf):
+            if p is None:
+                init_policy1[i] = np.random.random()
+
+        for i, p in enumerate(init_policy2_conf):
+            if p is None:
+                init_policy2[i] = np.random.random()
+
         start_time = time.time()
-        seed = config["simulation"]["seed_start"] + i
-        print("\tRun:", i, "Seed:", seed)
+        seed = config["simulation"]["seed_start"] + j
+        print("\tRun:", j, "Seed:", seed)
 
         agent_pair_class = globals()[agent_pair_name.upper()]
         agent_pair = agent_pair_class(config["agent_pairs"][agent_pair_name], config["games"][game])
+
         _, _, result = agent_pair.run(seed=seed)
         results["results"]["seeds"].append(result)
         print("\tRun took: ", time.time() - start_time, "sec")
+
+    config["games"][game]["init_policy1"] = init_policy1_conf
+    config["games"][game]["init_policy2"] = init_policy1_conf
 
     save_results(results, args.output_folder + agent_pair_name + "_" + game + ".json")
 

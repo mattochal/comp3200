@@ -349,11 +349,11 @@ def long_epochs(folder="long_epochs/"):
 # TEST = True
 TEST = False
 
-# AGENT_PAIR = "lolaom_vs_lolaom"
-# FOLDER_PREFIX = "results/lolaom_"
+AGENT_PAIR = "lolaom_vs_lolaom"
+FOLDER_PREFIX = "results/lolaom_"
 
-AGENT_PAIR = "lola_vs_lola"
-FOLDER_PREFIX = "results/lola_"
+# AGENT_PAIR = "lola_vs_lola"
+# FOLDER_PREFIX = "results/lola_"
 
 if TEST:
     FOLDER_PREFIX = "test_" + FOLDER_PREFIX
