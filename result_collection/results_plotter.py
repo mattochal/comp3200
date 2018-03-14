@@ -52,7 +52,7 @@ def get_value_fns(results):
     return np.array(vs)
 
 
-def moving_average(a, window_size=5):
+def moving_average(a, window_size=10):
     ret = np.cumsum(a, dtype=float)
     ret[window_size:] = ret[window_size:] - ret[:-window_size]
     return ret[window_size - 1:] / window_size
@@ -61,12 +61,22 @@ def moving_average(a, window_size=5):
 def plot_average_value(path):
     results = load_results(path)
     X = get_value_fns(results)
-    min_v1 = moving_average(np.min(X[:, :, 0], axis=0))
-    max_v1 = moving_average(np.max(X[:, :, 0], axis=0))
-    avr_v1 = moving_average(np.mean(X[:, :, 0], axis=0))
-    min_v2 = moving_average(np.min(X[:, :, 1], axis=0))
-    max_v2 = moving_average(np.max(X[:, :, 1], axis=0))
-    avr_v2 = moving_average(np.mean(X[:, :, 1], axis=0))
+
+    avr_v1 = np.mean(X[:, :, 0], axis=0)
+    min_v1 = avr_v1 - np.std(X[:, :, 0], axis=0)
+    max_v1 = avr_v1 + np.std(X[:, :, 0], axis=0)
+
+    avr_v2 = np.mean(X[:, :, 1], axis=0)
+    min_v2 = avr_v2 - np.std(X[:, :, 1], axis=0)
+    max_v2 = avr_v2 + np.std(X[:, :, 1], axis=0)
+
+    avr_v1 = moving_average(avr_v1)
+    min_v1 = moving_average(min_v1)
+    max_v1 = moving_average(max_v1)
+
+    avr_v2 = moving_average(avr_v2)
+    min_v2 = moving_average(min_v2)
+    max_v2 = moving_average(max_v2)
 
     x = np.arange(np.shape(min_v1)[0])
     f, (ax1, ax2) = plt.subplots(1, 2)
@@ -86,12 +96,12 @@ def plot_average_value(path):
 
 def plot_connected_policy_dots(path):
     results = load_results(path)
-    X = get_epoch_policies(results)[:50]
+    X = get_epoch_policies(results)[:10]
     # np.shape(X) = [repeats, epochs, # of players = 2, # of states = 5]
 
     fig, ax = plt.subplots()
 
-    depth = 20
+    depth = 1000
 
     colors = ["purple", "blue", "orange", "green", "red"]
     state = ["s0", "CC", "CD", "DC", "DD"]
@@ -117,5 +127,5 @@ def plot_single_sim_run(path):
 
 if __name__ == "__main__":
     # plot_single_sim_run("results/lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
-    plot_connected_policy_dots("results/lola_random_init_long_epochs/E00xD00/lola_vs_lola_IPD.json")
+    plot_average_value("results/lola_random_init_long_epochs/E07xD07/lola_vs_lola_IPD.json")
     # plot_average_value("results/result_lolaom_vs_lolaom_IPD.json")

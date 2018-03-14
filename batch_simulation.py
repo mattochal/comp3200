@@ -285,7 +285,12 @@ def random_init_long_epochs(folder="random_init_long_epochs/"):
         length = 50
         epochs = 1000
 
-    wall_time_offset = 1 * 60 * 60
+    if AGENT_PAIR == "lolaom_vs_lolaom":
+        wall_time_offset = 4 * 60 * 60
+
+    elif AGENT_PAIR == "lola_vs_lola":
+        wall_time_offset = 1 * 60 * 60
+
     factor = 0
     agent_pair = AGENT_PAIR
     game = "IPD"
@@ -346,14 +351,72 @@ def long_epochs(folder="long_epochs/"):
                       """'games.{0}.init_policy2 = {1}'""".format(game, json.dumps([0.5] * 5))]
             invoke_dilemma_qsubs(game, sub_folder, flags, params, epochs, agent_pair=agent_pair, walltime=wall_time)
 
-# TEST = True
-TEST = False
 
-AGENT_PAIR = "lolaom_vs_lolaom"
-FOLDER_PREFIX = "results/lolaom_"
+def randomness_robustness(folder="random_init_policy_robustness/"):
+    path_to_folder = WORKING_DIR + FOLDER_PREFIX + folder
+    path_to_config = WORKING_DIR + "config.json"
+
+    if TEST:
+        repeats = 5
+        num = 5
+        length = 5
+        epochs = 2
+    else:
+        repeats = 500
+        num = 50
+        length = 50
+        epochs = 1000
+
+    if AGENT_PAIR == "lola1_vs_lola1":
+        wall_time_offset = 1.5 * 60 * 60
+
+    elif AGENT_PAIR == "lola1b_vs_lola1b":
+        wall_time_offset = 2 * 60 * 60
+
+    factor = 0
+    agent_pair = AGENT_PAIR
+    game = "IPD"
+
+    randomness = np.linspace(0, 0.5, 51)
+
+    eta = 5
+    delta = 0.25
+    gamma = 0.96
+
+    for i, r in enumerate(randomness):
+        sub_folder = path_to_folder + "R{0:02d}/".format(i)
+        os.makedirs(sub_folder, exist_ok=True)
+        wall_time = humanize_time(wall_time_offset + factor * (num * length - 25.0 * 20) * repeats)
+        flags = ["-o", sub_folder, "-i", path_to_config]
+
+        dist = "{" + """"name": "uniform", "params": [{0}, {1}]""".format(0.5 - r, 0.5 + r) + "}"
+        params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats)),
+                  """'agent_pairs.{0}.rollout_length = {1}'""".format(agent_pair, length),
+                  """'agent_pairs.{0}.num_rollout = {1}'""".format(agent_pair, num),
+                  """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
+                  """'agent_pairs.{0}.eta = {1}'""".format(agent_pair, eta),
+                  """'agent_pairs.{0}.delta = {1}'""".format(agent_pair, delta),
+                  """'agent_pairs.{0}.gamma = {1}'""".format(agent_pair, gamma),
+                  """'games.{0}.init_policy1 = {1}'""".format(game, json.dumps([None] * 5)),
+                  """'games.{0}.init_policy2 = {1}'""".format(game, json.dumps([None] * 5)),
+                  """'simulation.random_init_policy_dist = {0}'""".format(json.dumps(json.loads(dist)))]
+        invoke_dilemma_qsubs(game, sub_folder, flags, params, epochs, agent_pair=agent_pair, walltime=wall_time)
+
+
+TEST = True
+# TEST = False
+
+# AGENT_PAIR = "lolaom_vs_lolaom"
+# FOLDER_PREFIX = "results/lolaom_"
 
 # AGENT_PAIR = "lola_vs_lola"
 # FOLDER_PREFIX = "results/lola_"
+
+# AGENT_PAIR = "lola1_vs_lola1"
+# FOLDER_PREFIX = "results/lola1_"
+
+AGENT_PAIR = "lola1b_vs_lola1b"
+FOLDER_PREFIX = "results/lola1b_"
 
 if TEST:
     FOLDER_PREFIX = "test_" + FOLDER_PREFIX
@@ -364,6 +427,7 @@ if __name__ == "__main__":
     # IPD_SG_space()
     # policy_init()
     # rollouts_small()
-    random_init_long_epochs()
+    # random_init_long_epochs()
     # long_epochs()
+    randomness_robustness()
     pass

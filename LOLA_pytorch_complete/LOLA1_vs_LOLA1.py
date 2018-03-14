@@ -3,6 +3,7 @@ from LOLA_pytorch.IPD_game import av_return
 from torch.autograd import Variable
 import numpy as np
 from agent_pair import AgentPair
+import random
 
 
 def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10,
@@ -10,7 +11,6 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
         rollout_length="not used but needed", num_rollout="not used but needed"):
 
     dtype = torch.FloatTensor
-
     result = {"epoch": []}
 
     init_policy1 = np.array(init_policy1, dtype="f")
@@ -60,13 +60,17 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
         dV1 = torch.autograd.grad(V1, (y1, y2), create_graph=True)
         dV2 = torch.autograd.grad(V2, (y1, y2), create_graph=True)
 
-        # 2nd order derivative of naive learner's value function w.r.t. LOLA agent's parameters
+        # 2nd order gradient of 1st agent's value function w.r.t. 2nd agents' parameters
         # The for-loop exists as the gradients can only be calculated from scalar values
         d2V1 = [torch.autograd.grad(dV1[0][i], y2, create_graph=True)[0] for i in range(y1.size(0))]
         d2V1Tensor = torch.cat([d2V1[i] for i in range(y1.size(0))], 1)
 
-        # Update for Naive Learner agent
-        y1.data += (delta * dV1[0]).data
+        # Same for the other agent
+        d2V2 = [torch.autograd.grad(dV2[1][i], y1, create_graph=True)[0] for i in range(y2.size(0))]
+        d2V2Tensor = torch.cat([d2V2[i] for i in range(y2.size(0))], 1)
+
+        # Update for LOLA agent
+        y1.data += (delta * dV1[0] + delta * eta * torch.matmul(d2V2Tensor, dV1[1])).data
 
         # Update for LOLA agent
         y2.data += (delta * dV2[1] + delta * eta * torch.matmul(d2V1Tensor, dV2[0])).data
@@ -91,10 +95,10 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
     return p1, p2, result
 
 
-class NL_VS_LOLA(AgentPair):
+class LOLA_VS_LOLA(AgentPair):
 
     def run(self, seed):
-        super(NL_VS_LOLA, self).run(seed)
+        super(LOLA_VS_LOLA, self).run(seed)
         return run(**self.parameters)
 
 

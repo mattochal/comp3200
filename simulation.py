@@ -2,6 +2,8 @@ import argparse
 import json
 from LOLA_pytorch.LOLA_vs_LOLA import LOLA_VS_LOLA
 from LOLA_pytorch.LOLAOM_vs_LOLAOM import LOLAOM_VS_LOLAOM
+from LOLA_pytorch_complete.LOLA_custom import LOLA1_VS_LOLA1, LOLA1B_VS_LOLA1B
+
 import time
 import sys, os
 import random
@@ -36,6 +38,11 @@ def substitute(to_sub_list, json_input):
         json_input = subst(json_input, p.split("=")[0].strip().split("."), json.loads(p.split("=")[1]))
 
 
+def draw_from_init_policy_dist(dist):
+    if dist["name"] == "uniform":
+        return np.random.uniform(dist["params"][0], dist["params"][1])
+
+
 def main(args):
     config = load_config(args.to_sub)
     results = {"config": config, "results": {"seeds": []}}
@@ -53,11 +60,11 @@ def main(args):
 
         for i, p in enumerate(init_policy1_conf):
             if p is None:
-                init_policy1[i] = np.random.random()
+                init_policy1[i] = draw_from_init_policy_dist(config["simulation"]["random_init_policy_dist"])
 
         for i, p in enumerate(init_policy2_conf):
             if p is None:
-                init_policy2[i] = np.random.random()
+                init_policy2[i] = draw_from_init_policy_dist(config["simulation"]["random_init_policy_dist"])
 
         start_time = time.time()
         seed = config["simulation"]["seed_start"] + j

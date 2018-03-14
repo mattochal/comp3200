@@ -1,46 +1,50 @@
 import numpy as np
-import os
-import glob
-import fnmatch
-import json
 import matplotlib.pyplot as plt
+import re
+
+from result_collection.helper_func import *
 
 
-def find_files(directory, pattern, ignore_root=True):
-    for root, dirs, files in os.walk(directory):
-        if not (root == directory and ignore_root):
-            for basename in files:
-                if fnmatch.fnmatch(basename, pattern):
-                    filename = os.path.join(root, basename)
-                    yield filename
+def plot_policies(results, keys, title, show=True, figsize=(13, 8), colours=None, filename=None):
+    rows = len(keys)
+    cols = len(keys[0])
 
+    fig, axes = plt.subplots(nrows=rows, ncols=cols, sharex=True, sharey=True, figsize=figsize)
+    fig.text(0.5, 0.96, title, ha='center', fontsize=14)
+    fig.text(0.5, 0.02, 'P(cooperation | state) for agent 0', ha='center', fontsize=12)
+    fig.text(0.02, 0.5, 'P(cooperation | state) for agent 1', va='center', rotation='vertical', fontsize=12)
 
-def load_results(path):
-    with open(path, 'r') as f:
-        data = json.load(f)
-    return data
+    colors = ["purple", "blue", "orange", "green", "red"]
+    state = ["s0", "CC", "CD", "DC", "DD"]
+    for r, row in enumerate(axes):
+        for c, ax in enumerate(row):
+            X = results[r][c]
+            for s in range(5):
+                ax.scatter(X[:, 0, s], X[:, 1, s], s=55, c=colors[s], alpha=0.5, label=state[s])
+            ax.set_title(keys[r][c], fontsize=11)
+            if colours is not None:
+                ax.set_facecolor(colours[r][c])
 
+    plt.subplots_adjust(left=0.07, right=0.99, top=0.87, bottom=0.08, wspace=0.07, hspace=0.27)
+    handles, labels = ax.get_legend_handles_labels()
+    legend = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.51, 0.95), ncol=5, borderaxespad=0, fancybox=True)
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+    frame.set_alpha(1)
 
-def get_policies(results):
-    policies = []
-    for experiment in results["results"]["seeds"]:
-        policies.append([experiment["P1"], experiment["P2"]])
-    return policies
-
-
-def get_collective_policies(folder, pattern='*.json'):
-    results = dict()
-    for filename in find_files(folder, pattern):
-        X = get_policies(load_results(filename))
-        results[filename] = X
-    return results
+    if show:
+        plt.show()
+    else:
+        if filename is None:
+            filename = title
+        plt.savefig(filename+".pdf")
 
 
 def lolaom_dilemmas(folder="results/lolaom_dilemmas/"):
     game = "IPD"
     # game = "ISD"
     # game = "ISH"
-    results = get_collective_policies(folder, "*{0}.json".format(game))
+    results = collect_experiment_end_policies(folder, "*{0}.json".format(game))
 
     nums = [25, 50, 75, 100]
     lengths = [20, 50, 100, 150]
@@ -75,42 +79,9 @@ def lolaom_dilemmas(folder="results/lolaom_dilemmas/"):
     # print(ipd_results)
 
 
-def plot_policies(results, keys, title, show=True, figsize=(13, 8), colours=None):
-    rows = len(keys)
-    cols = len(keys[0])
-
-    fig, axes = plt.subplots(nrows=rows, ncols=cols, sharex=True, sharey=True, figsize=figsize)
-    fig.text(0.5, 0.96, title, ha='center', fontsize=14)
-    fig.text(0.5, 0.02, 'P(cooperation | state) for agent 0', ha='center', fontsize=12)
-    fig.text(0.02, 0.5, 'P(cooperation | state) for agent 1', va='center', rotation='vertical', fontsize=12)
-
-    colors = ["purple", "blue", "orange", "green", "red"]
-    state = ["s0", "CC", "CD", "DC", "DD"]
-    for r, row in enumerate(axes):
-        for c, ax in enumerate(row):
-            X = results[r][c]
-            for s in range(5):
-                ax.scatter(X[:, 0, s], X[:, 1, s], s=55, c=colors[s], alpha=0.5, label=state[s])
-            ax.set_title(keys[r][c], fontsize=11)
-            if colours is not None:
-                ax.set_facecolor(colours[r][c])
-
-    plt.subplots_adjust(left=0.07, right=0.99, top=0.87, bottom=0.08, wspace=0.07, hspace=0.27)
-    handles, labels = ax.get_legend_handles_labels()
-    legend = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.51, 0.95), ncol=5, borderaxespad=0, fancybox=True)
-    frame = legend.get_frame()
-    frame.set_edgecolor('black')
-    frame.set_alpha(1)
-
-    if show:
-        plt.show()
-    else:
-        plt.savefig(title+".pdf")
-
-
 def lolaom_ST_space(folder="results/lolaom_ST_space/"):
     game = "IPD"
-    results = get_collective_policies(folder, "*{0}.json".format(game))
+    results = collect_experiment_end_policies(folder, "*{0}.json".format(game))
 
     S = np.linspace(-1.0, 1.0, num=9)
     T = np.linspace(0.0, 2.0, num=9)
@@ -151,7 +122,7 @@ def lolaom_rollouts_small(folder="results/lolaom_rollouts_small/"):
     game = "IPD"
     # game = "ISD"
     # game = "ISH"
-    results = get_collective_policies(folder, "*{0}.json".format(game))
+    results = collect_experiment_end_policies(folder, "*{0}.json".format(game))
 
     nums = [5, 10, 15, 20]
     lengths = [5, 10, 15, 20]
@@ -175,7 +146,7 @@ def lolaom_rollouts_small(folder="results/lolaom_rollouts_small/"):
 
 def lolaom_IPD_SG_space(folder="results/lolaom_IPD_SG_space/"):
     game = "IPD"
-    results = get_collective_policies(folder, "*{0}.json".format(game))
+    results = collect_experiment_end_policies(folder, "*{0}.json".format(game))
 
     S = np.linspace(-1.0, 0.0, num=9)
     Gammas = np.linspace(0.0, 1.0, num=11)
@@ -201,7 +172,7 @@ def lolaom_IPD_SG_space(folder="results/lolaom_IPD_SG_space/"):
 
 def lolaom_policy_init(folder="results/lolaom_policy_init/"):
     game = "IPD"
-    results = get_collective_policies(folder, "*{0}.json".format(game))
+    results = collect_experiment_end_policies(folder, "*{0}.json".format(game))
 
     theta1 = np.linspace(0.0, 1.0, num=9)
     theta2 = np.linspace(0.0, 1.0, num=9)
@@ -226,7 +197,7 @@ def lolaom_policy_init(folder="results/lolaom_policy_init/"):
 
 def lolaom_long_epochs(folder="results/lolaom_long_epochs/"):
     game = "IPD"
-    results = get_collective_policies(folder, "*{0}.json".format(game))
+    results = collect_experiment_end_policies(folder, "*{0}.json".format(game))
 
     ETA = [0.01, 0.1, 0.5, 1.0, 5, 7.5, 10, 15]
     DELTA = [0.0005, 0.001, 0.01, 0.1, 0.25, 0.5, 1.0, 3.0]
@@ -249,9 +220,9 @@ def lolaom_long_epochs(folder="results/lolaom_long_epochs/"):
                   show=False, figsize=(30, 30))
 
 
-def lolaom_random_init_long_epochs(folder="results/lolaom_random_init_long_epochs/"):
+def lolaom_random_init_long_epochs(folder="../results/lolaom_random_init_long_epochs/", agents="LOLAOM"):
     game = "IPD"
-    results = get_collective_policies(folder, "*{0}.json".format(game))
+    results = collect_experiment_end_policies(folder, "*{0}.json".format(game))
 
     ETA = [0.01, 0.1, 0.5, 1.0, 5, 7.5, 10, 15]
     DELTA = [0.0005, 0.001, 0.01, 0.1, 0.25, 0.5, 1.0, 3.0]
@@ -260,8 +231,7 @@ def lolaom_random_init_long_epochs(folder="results/lolaom_random_init_long_epoch
     sorted_results = [[None for _ in DELTA] for _ in ETA]
 
     def index(filename):
-        folder = filename.split('/')[2]
-        e_d = folder.split('x')
+        e_d = re.findall('[E|D]\d+', filename)
         return int(e_d[0][1:]), int(e_d[1][1:])
 
     for filename, X in results.items():
@@ -270,13 +240,13 @@ def lolaom_random_init_long_epochs(folder="results/lolaom_random_init_long_epoch
             sorted_results[i][j] = np.array(X)
 
     plot_policies(np.array(sorted_results), keys,
-                  "results/How delta and eta affect the final policy of the LOLAOM agents in the {0} game "
-                  "with random parameter initialisation".format(game),
-                  show=False, figsize=(40, 40))
+                  "../results/How delta and eta affect the final policy of the {1} agents in the {0} game "
+                  "with random parameter initialisation".format(game, agents),
+                  show=False, figsize=(40, 40), filename=folder)
 
 
-def lola_random_init_long_epochs(folder="results/lola_random_init_long_epochs/"):
-    lolaom_random_init_long_epochs(folder)
+def lola_random_init_long_epochs(folder="../results/lola_random_init_long_epochs/"):
+    lolaom_random_init_long_epochs(folder, agents="LOLA")
 
 
 if __name__ == "__main__":
@@ -285,7 +255,7 @@ if __name__ == "__main__":
     # lolaom_IPD_SG_space()
     # lolaom_policy_init()
     # lolaom_rollouts_small()
+    # lolaom_random_init_long_epochs()
     lolaom_random_init_long_epochs()
-    lola_random_init_long_epochs()
     pass
 

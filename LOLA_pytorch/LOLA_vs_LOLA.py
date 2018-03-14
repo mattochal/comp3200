@@ -5,6 +5,7 @@ import numpy as np
 from agent_pair import AgentPair
 import random
 
+
 def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10,
         init_policy1=[0.5, 0.5, 0.5, 0.5, 0.5], init_policy2=[0.5, 0.5, 0.5, 0.5, 0.5],
         rollout_length="not used but needed", num_rollout="not used but needed"):

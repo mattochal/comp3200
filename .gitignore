@@ -1,9 +1,14 @@
 .idea/
 __pycache__/
 .DS_Store
+.ipynb_checkpoints/
+
+*.pdf
+iris
 
 test_results/
 results/
+results.zip
 
 lolaom_dilemmas/
 lolaom_ST_space/

@@ -3,9 +3,11 @@ from LOLA_pytorch.IPD_game import av_return
 from torch.autograd import Variable
 import numpy as np
 from agent_pair import AgentPair
+from LOLA_pytorch_complete.update_rules import update
+from LOLA_pytorch_complete.IPD_value_fns import exact, policy_grad, modelling
 
 
-def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10,
+def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10, beta=0,
         init_policy1=[0.5, 0.5, 0.5, 0.5, 0.5], init_policy2=[0.5, 0.5, 0.5, 0.5, 0.5],
         rollout_length="not used but needed", num_rollout="not used but needed"):
 
@@ -38,6 +40,9 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
     # Term in f_lola update rule
     eta = Variable(torch.Tensor([eta]).type(dtype))
 
+    # Term in f_lola update rule
+    beta = Variable(torch.Tensor([beta]).type(dtype))
+
     for epoch in range(n):
         x1 = torch.sigmoid(y1)
         x2 = torch.sigmoid(y2)
@@ -51,25 +56,14 @@ def run(n=200, visualise=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2]
 
         # These are the exact value functions of the agent 1 and 2
         # as a sum of the expected average reward given the probability of cooperation in state s0
-        V1 = torch.matmul(torch.matmul(P[0, :], Zinv), r1)
-        V2 = torch.matmul(torch.matmul(P[0, :], Zinv), r2)
 
-        # 1st order gradient of 1st and 2nd agents' value functions w.r.t. both agents' parameters
-        # Note: even though we generate the derivative with respect to both agents' policies
-        #       later we only take the partial derivative with respect to agent's own policy
-        dV1 = torch.autograd.grad(V1, (y1, y2), create_graph=True)
-        dV2 = torch.autograd.grad(V2, (y1, y2), create_graph=True)
-
-        # 2nd order derivative of naive learner's value function w.r.t. LOLA agent's parameters
-        # The for-loop exists as the gradients can only be calculated from scalar values
-        d2V1 = [torch.autograd.grad(dV1[0][i], y2, create_graph=True)[0] for i in range(y1.size(0))]
-        d2V1Tensor = torch.cat([d2V1[i] for i in range(y1.size(0))], 1)
+        V1, V2, dV1, dV2 = torch.autograd.grad(V2, (y1, y2), create_graph=True)
 
         # Update for Naive Learner agent
-        y1.data += (delta * dV1[0]).data
+        y1.data += update("LOLA2", 0, (y1, y2), (dV1, dV2), delta, eta, beta)
 
         # Update for LOLA agent
-        y2.data += (delta * dV2[1] + delta * eta * torch.matmul(d2V1Tensor, dV2[0])).data
+        y2.data += update("LOLA1", 1, (y1, y2), (dV1, dV2), delta, eta, beta)
 
         result["epoch"].append({"V1": np.squeeze(V1.data.cpu().numpy()).tolist(),
                                 "V2": np.squeeze(V2.data.cpu().numpy()).tolist(),
@@ -99,4 +93,4 @@ class NL_VS_LOLA(AgentPair):
 
 
 if __name__ == "__main__":
-    run(visualise=False)
+    run(visualise=True)

@@ -4,9 +4,10 @@ import copy
 
 class AgentPair:
 
-    def __init__(self, pair_setting, game_settings):
+    def __init__(self, pair_setting, game_settings, other_settings=None):
         self.setting = copy.copy(pair_setting)
         self.game_settings = copy.copy(game_settings)
+        self.other_settings = other_settings
         self.parameters = {**self.setting, **self.game_settings}
 
     def run(self, seed):
