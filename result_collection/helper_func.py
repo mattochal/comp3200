@@ -24,6 +24,13 @@ def load_results(path):
     return data
 
 
+# Saves result to given filename
+def save_results(results, filename):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, 'w') as outfile:
+        json.dump(results, outfile, indent=2)
+
+
 # Given single experiment results in json format
 # extracts end policies for both agents
 def get_end_policies(results):
@@ -39,6 +46,15 @@ def get_initial_policies(results):
     policies = []
     for experiment in results["results"]["seeds"]:
         policies.append([experiment["epoch"][0]["P1"], experiment["epoch"][0]["P2"]])
+    return policies
+
+
+# Given single experiment results in json format
+# extracts policies after ith iteration for both agents
+def get_ith_policies(results, i):
+    policies = []
+    for experiment in results["results"]["seeds"]:
+        policies.append([experiment["epoch"][i]["P1"], experiment["epoch"][i]["P2"]])
     return policies
 
 
@@ -72,10 +88,30 @@ def get_epoch_value_fns(results):
 
 # Given a directory to a folder containing multiple result files stored in json format
 # return a dictionary keyed with file paths and the loaded policy
-def collect_experiment_end_policies(folder, pattern='*.json'):
+def collect_experiment_end_policies(folder, pattern='*.json', top=None):
     results = dict()
+    filenames = []
     for filename in find_files(folder, pattern):
+        filenames.append(filename)
+
+    for filename in sorted(filenames)[:top]:
+        print("Loading: ", filename)
         X = get_end_policies(load_results(filename))
+        results[filename] = X
+    return results
+
+
+# Given a directory to a folder containing multiple result files stored in json format
+# return a dictionary keyed with file paths and the loaded policy
+def collect_experiment_ith_policies(folder, i, pattern='*.json', top=None):
+    results = dict()
+    filenames = []
+    for filename in find_files(folder, pattern):
+        filenames.append(filename)
+
+    for filename in sorted(filenames)[:top]:
+        print("Loading: ", filename)
+        X = get_ith_policies(load_results(filename), i)
         results[filename] = X
     return results
 

@@ -5,9 +5,9 @@ import re
 from result_collection.helper_func import *
 
 
-def plot_policies(results, keys, title, show=True, figsize=(13, 8), colours=None, filename=None):
-    rows = len(keys)
-    cols = len(keys[0])
+def plot_2ax_policies(results, keys, title, show=True, figsize=(13, 8), colours=None, filename=None):
+    rows = np.shape(results)[0]
+    cols = np.shape(results)[1]
 
     fig, axes = plt.subplots(nrows=rows, ncols=cols, sharex=True, sharey=True, figsize=figsize)
     fig.text(0.5, 0.96, title, ha='center', fontsize=14)
@@ -27,6 +27,40 @@ def plot_policies(results, keys, title, show=True, figsize=(13, 8), colours=None
 
     plt.subplots_adjust(left=0.07, right=0.99, top=0.87, bottom=0.08, wspace=0.07, hspace=0.27)
     handles, labels = ax.get_legend_handles_labels()
+    legend = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.51, 0.95), ncol=5, borderaxespad=0, fancybox=True)
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+    frame.set_alpha(1)
+
+    if show:
+        plt.show()
+    else:
+        if filename is None:
+            filename = title
+        plt.savefig(filename+".pdf")
+
+
+def plot_1ax_policies(results, keys, title, show=True, figsize=(13, 8), colours=None, filename=None):
+    rows = np.shape(results)[0]
+
+    fig, axes = plt.subplots(ncols=rows, nrows=1, sharex=True, sharey=True, figsize=figsize)
+    fig.text(0.5, 0.96, title, ha='center', fontsize=14)
+    fig.text(0.5, 0.02, 'P(cooperation | state) for agent 0', ha='center', fontsize=12)
+    fig.text(0.02, 0.5, 'P(cooperation | state) for agent 1', va='center', rotation='vertical', fontsize=12)
+
+    colors = ["purple", "blue", "orange", "green", "red"]
+    state = ["s0", "CC", "CD", "DC", "DD"]
+    for r, ax in enumerate(axes):
+        X = results[r]
+        for s in range(5):
+            ax.scatter(X[:, 0, s], X[:, 1, s], s=55, c=colors[s], alpha=0.5, label=state[s])
+        ax.set_title(keys[r], fontsize=11)
+        if colours is not None:
+            ax.set_facecolor(colours[r])
+
+    plt.subplots_adjust(left=0.07, right=0.99, top=0.87, bottom=0.08, wspace=0.07, hspace=0.27)
+    handles, labels = ax.get_legend_handles_labels()
+
     legend = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.51, 0.95), ncol=5, borderaxespad=0, fancybox=True)
     frame = legend.get_frame()
     frame.set_edgecolor('black')
@@ -62,7 +96,7 @@ def lolaom_dilemmas(folder="results/lolaom_dilemmas/"):
         if game in filename:
             sorted_results[i][j] = X
 
-    plot_policies(np.array(sorted_results), keys, "How the number and length of rollouts affects the final policy "
+    plot_2ax_policies(np.array(sorted_results), keys, "How the number and length of rollouts affects the final policy "
                                                   "of the agents in the {0} game".format(game))
     #
     # def swap(nparray):
@@ -113,9 +147,9 @@ def lolaom_ST_space(folder="results/lolaom_ST_space/"):
         if game in filename:
             sorted_results[i][j] = np.array(X)
 
-    plot_policies(np.array(sorted_results), keys, "How the S and T affect the final policy "
+    plot_2ax_policies(np.array(sorted_results), keys, "How the S and T affect the final policy "
                                                   "of the agents in across the dilemmas",
-                  show=False, figsize=(30, 30), colours=colours)
+                      show=False, figsize=(30, 30), colours=colours)
 
 
 def lolaom_rollouts_small(folder="results/lolaom_rollouts_small/"):
@@ -140,7 +174,7 @@ def lolaom_rollouts_small(folder="results/lolaom_rollouts_small/"):
         if game in filename:
             sorted_results[i][j] = X
 
-    plot_policies(np.array(sorted_results), keys, "How the number and length of rollouts affects the final policy "
+    plot_2ax_policies(np.array(sorted_results), keys, "How the number and length of rollouts affects the final policy "
                                                   "of the agents in the {0} game".format(game))
 
 
@@ -165,9 +199,9 @@ def lolaom_IPD_SG_space(folder="results/lolaom_IPD_SG_space/"):
         if game in filename:
             sorted_results[i][j] = np.array(X)
 
-    plot_policies(np.array(sorted_results), keys,
+    plot_2ax_policies(np.array(sorted_results), keys,
                   "How the S and gamma affects the final policy of the agents in the {0} game".format(game),
-                  show=False, figsize=(30, 30))
+                      show=False, figsize=(30, 30))
 
 
 def lolaom_policy_init(folder="results/lolaom_policy_init/"):
@@ -190,9 +224,9 @@ def lolaom_policy_init(folder="results/lolaom_policy_init/"):
         if game in filename:
             sorted_results[i][j] = np.array(X)
 
-    plot_policies(np.array(sorted_results), keys,
+    plot_2ax_policies(np.array(sorted_results), keys,
                   "How the initial policy parameters affects the final policy of the agents in the {0} game".format(game),
-                  show=False, figsize=(30, 30))
+                      show=False, figsize=(30, 30))
 
 
 def lolaom_long_epochs(folder="results/lolaom_long_epochs/"):
@@ -215,9 +249,9 @@ def lolaom_long_epochs(folder="results/lolaom_long_epochs/"):
         if game in filename:
             sorted_results[i][j] = np.array(X)
 
-    plot_policies(np.array(sorted_results), keys,
+    plot_2ax_policies(np.array(sorted_results), keys,
                   "results/How delta and eta affect the final policy of the agents in the {0} game".format(game),
-                  show=False, figsize=(30, 30))
+                      show=False, figsize=(30, 30))
 
 
 def lolaom_random_init_long_epochs(folder="../results/lolaom_random_init_long_epochs/", agents="LOLAOM"):
@@ -239,15 +273,60 @@ def lolaom_random_init_long_epochs(folder="../results/lolaom_random_init_long_ep
         if game in filename:
             sorted_results[i][j] = np.array(X)
 
-    plot_policies(np.array(sorted_results), keys,
+    plot_2ax_policies(np.array(sorted_results), keys,
                   "../results/How delta and eta affect the final policy of the {1} agents in the {0} game "
                   "with random parameter initialisation".format(game, agents),
-                  show=False, figsize=(40, 40), filename=folder)
+                      show=False, figsize=(40, 40), filename=folder)
 
 
 def lola_random_init_long_epochs(folder="../results/lola_random_init_long_epochs/"):
     lolaom_random_init_long_epochs(folder, agents="LOLA")
 
+
+def lola1_random_init_policy_robustness_500(folder="../results/lola1_random_init_policy_robustness/", agents="LOLA1"):
+    game = "IPD"
+    results = collect_experiment_ith_policies(folder, 500, "*{0}.json".format(game))
+
+    randomness = np.linspace(0, 0.5, 51)
+
+    keys = ["R=[{0:.2f}, {1:.2f}]".format(0.5-r, 0.5+r) for r in randomness]
+    sorted_results = [None for _ in randomness]
+
+    def index(filename):
+        return int(re.findall('R\d+', filename)[0][1:])
+
+    for filename, X in results.items():
+        i = index(filename)
+        if game in filename and i < len(sorted_results):
+            sorted_results[i] = np.array(X)
+
+    plot_1ax_policies(np.array(sorted_results), keys,
+                  "How randomness affects the policy of the {1} agents in the {0} game after playing 500 iterations"
+                  "with random parameter initialisation".format(game, agents),
+                      show=False, figsize=(200, 5), filename=folder[:-1]+"_500")
+
+
+def lola1_random_init_policy_robustness(folder="../results/lola1_random_init_policy_robustness/", agents="LOLA1"):
+    game = "IPD"
+    results = collect_experiment_end_policies(folder, "*{0}.json".format(game))
+
+    randomness = np.linspace(0, 0.5, 51)
+
+    keys = ["R=[{0:.2f}, {1:.2f}]".format(0.5-r, 0.5+r) for r in randomness]
+    sorted_results = [None for _ in randomness]
+
+    def index(filename):
+        return int(re.findall('R\d+', filename)[0][1:])
+
+    for filename, X in results.items():
+        i = index(filename)
+        if game in filename and i < len(sorted_results):
+            sorted_results[i] = np.array(X)
+
+    plot_1ax_policies(np.array(sorted_results), keys,
+                  "How randomness affects the policy of the {1} agents in the {0} game after playing 1000 iterations"
+                  "with random parameter initialisation".format(game, agents),
+                      show=False, figsize=(200, 5), filename=folder[:-1])
 
 if __name__ == "__main__":
     # lolaom_dilemmas()
@@ -256,6 +335,6 @@ if __name__ == "__main__":
     # lolaom_policy_init()
     # lolaom_rollouts_small()
     # lolaom_random_init_long_epochs()
-    lolaom_random_init_long_epochs()
+    lola1_random_init_policy_robustness_500()
     pass
 
