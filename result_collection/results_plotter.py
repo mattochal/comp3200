@@ -2,34 +2,35 @@ import json
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
+from result_collection.helper_func import *
 
-
-def load_results(path):
-    with open(path, 'r') as f:
-        data = json.load(f)
-    return data
-
-
-def get_policies(results):
-    policies = []
-    for experiment in results["results"]["seeds"]:
-        policies.append([experiment["P1"], experiment["P2"]])
-    return np.array(policies)
-
-
-def get_epoch_policies(results):
-    ps = []
-    for experiment in results["results"]["seeds"]:
-        p = []
-        for epoch in experiment["epoch"]:
-            p.append([epoch["P1"], epoch["P2"]])
-        ps.append(p)
-    return np.array(ps)
+#
+# def load_results(path):
+#     with open(path, 'r') as f:
+#         data = json.load(f)
+#     return data
+#
+#
+# def get_policies(results):
+#     policies = []
+#     for experiment in results["results"]["seeds"]:
+#         policies.append([experiment["P1"], experiment["P2"]])
+#     return np.array(policies)
+#
+#
+# def get_epoch_policies(results):
+#     ps = []
+#     for experiment in results["results"]["seeds"]:
+#         p = []
+#         for epoch in experiment["epoch"]:
+#             p.append([epoch["P1"], epoch["P2"]])
+#         ps.append(p)
+#     return np.array(ps)
 
 
 def plot_policies(results):
     fig, ax = plt.subplots()
-    X = get_policies(results)
+    X = get_end_policies(results)
     colors = ["purple", "blue", "orange", "green", "red"]
     state = ["s0", "CC", "CD", "DC", "DD"]
     for s in range(5):
@@ -125,7 +126,76 @@ def plot_single_sim_run(path):
     plot_policies(results)
 
 
+def plot_R_std_TFT_through_epochs(path):
+    results = load_results(path)
+    av_R1, std_R1, av_TFT1, _, av_R2, std_R2, av_TFT2, _ = get_av_epoch_R_std_TFT(results)
+    X = [[av_R1, std_R1, av_TFT1], [av_R2, std_R2, av_TFT2]]
+
+    fig, ax = plt.subplots()
+
+    colors = ["b", "r"]
+    labels = ["R", "TFT"]
+    symbols = ["x", "+"]
+
+    # 0 = R, 1 = TFT
+    f, ax1 = plt.subplots()
+
+    # # 0 = r, 1 = TFT
+    # for rt in range(0, 2):
+    #     # Two agents
+    #     for a in range(2):
+    #         R = X[a][rt]
+    #
+    #         avr_v1 = moving_average(R[0], window_size=1)
+    #         min_v1 = moving_average(R[0]-R[1], window_size=1)
+    #         max_v1 = moving_average(R[0]+R[1], window_size=1)
+    #
+    #         x = np.arange(np.shape(avr_v1)[0]) * 50
+    #         ax1.plot(x, avr_v1, colors[rt]+symbols[a], alpha=0.5)
+    #         ax1.fill_between(x, min_v1, max_v1, color=colors[rt], alpha=0.1)
+    #
+    #     ax1.set_ylabel(labels[rt])
+    #     ax1.tick_params('y', colors=colors[rt])
+    #     # break
+    #     if rt == 0:
+    #         ax1 = ax1.twinx()
+
+    rt = 0
+    # Two agents
+    for a in range(2):
+        R = X[a]
+
+        avr_v1 = moving_average(R[0], window_size=1)
+        min_v1 = moving_average(R[0] - R[1], window_size=1)
+        max_v1 = moving_average(R[0] + R[1], window_size=1)
+
+        x = np.arange(np.shape(avr_v1)[0]) * 50
+        ax1.plot(x, avr_v1, colors[rt] + symbols[a], alpha=0.5, label="Agent " + str(a))
+        ax1.fill_between(x, min_v1, max_v1, color=colors[rt], alpha=0.1)
+
+    ax1.set_ylabel(labels[rt])
+    ax1.tick_params('y', colors=colors[rt])
+
+    ax2 = ax1.twinx()
+    rt = 1
+    for a in range(2):
+        R = X[a]
+        avr_v1 = moving_average(R[2], window_size=1)
+
+        x = np.arange(np.shape(avr_v1)[0]) * 50
+        ax2.plot(x, avr_v1, colors[rt] + symbols[a], alpha=0.5)
+
+    ax2.set_ylabel(labels[rt])
+    ax2.tick_params('y', colors=colors[rt])
+
+    plt.title(results["config"]["simulation"]["agent_pair"] + " in " + results["config"]["simulation"]["game"])
+    plt.xlabel('Iteration')
+
+    ax1.legend(loc='lower right', shadow=True)
+    plt.show()
+
+
 if __name__ == "__main__":
     # plot_single_sim_run("results/lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
-    plot_average_value("results/lola_random_init_long_epochs/E07xD07/lola_vs_lola_IPD.json")
+    plot_R_std_TFT_through_epochs("results/lola1_random_init_policy_robustness/R25/lola1_vs_lola1_IPD.json")
     # plot_average_value("results/result_lolaom_vs_lolaom_IPD.json")

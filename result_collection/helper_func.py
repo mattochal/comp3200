@@ -19,6 +19,7 @@ def find_files(directory, pattern, ignore_root=True):
 
 # Loads json results given path to json file
 def load_results(path):
+    print("Loading...", path)
     with open(path, 'r') as f:
         data = json.load(f)
     return data
@@ -26,6 +27,7 @@ def load_results(path):
 
 # Saves result to given filename
 def save_results(results, filename):
+    print("Saving...", filename)
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, 'w') as outfile:
         json.dump(results, outfile, indent=2)
@@ -95,7 +97,6 @@ def collect_experiment_end_policies(folder, pattern='*.json', top=None):
         filenames.append(filename)
 
     for filename in sorted(filenames)[:top]:
-        print("Loading: ", filename)
         X = get_end_policies(load_results(filename))
         results[filename] = X
     return results
@@ -110,10 +111,44 @@ def collect_experiment_ith_policies(folder, i, pattern='*.json', top=None):
         filenames.append(filename)
 
     for filename in sorted(filenames)[:top]:
-        print("Loading: ", filename)
         X = get_ith_policies(load_results(filename), i)
         results[filename] = X
     return results
+
+
+def collect_experiment_epoch_R_std_TFT(folder, pattern='*.json', top=None):
+    results = dict()
+    filenames = []
+    for filename in find_files(folder, pattern):
+        filenames.append(filename)
+
+    for filename in sorted(filenames)[:top]:
+        json_results = load_results(filename)
+
+        av_R1, std_R1, av_TFT1, _, av_R2, std_R2, av_TFT2, _ = \
+            get_av_epoch_R_std_TFT(json_results)
+
+        results[filename] = np.array([[av_R1, std_R1, av_TFT1], [av_R2, std_R2, av_TFT2]])
+
+    return results
+
+
+# Given a single experiment result in json format
+# return the average reward R per time step and standard deviation
+# over the repeat through all the iterations in each epoch
+# and calculate and return an overall average for those values
+def get_av_epoch_R_std_TFT(results):
+    all_R_1, all_R_2, all_TFT_1, all_TFT_2 = get_epoch_R_std_TFT(results)
+    std_R1 = np.std(all_R_1, 0)
+    std_R2 = np.std(all_R_2, 0)
+    av_R1 = np.mean(all_R_1, 0)
+    av_R2 = np.mean(all_R_2, 0)
+    std_TFT1 = np.std(all_TFT_1, 0)
+    std_TFT2 = np.std(all_TFT_2, 0)
+    av_TFT1 = np.mean(all_TFT_1, 0)
+    av_TFT2 = np.mean(all_TFT_2, 0)
+    return av_R1, std_R1, av_TFT1, std_TFT1, av_R2, std_R2, av_TFT2, std_TFT2
+
 
 
 # Given a 1D numpy array and a window size
@@ -184,6 +219,8 @@ def get_end_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 
         end_policy = np.array([experiment["P1"], experiment["P2"]])
 
         # Calculated as an absolute difference between end policy and
+        # comparison = 1 - np.mean(np.abs(end_policy - comparison_policy), 1)
+
         comparison = 1 - np.mean(np.abs(end_policy - comparison_policy), 1)
 
         # TFT likeliness percentage across both agents
@@ -211,54 +248,52 @@ def get_epoch_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0
     gamma = results["config"]["agent_pairs"][agent_pair]["gamma"]
 
     # Metrics to record
-    all_av_R_1 = []
-    all_av_R_2 = []
-    all_av_compare_1 = []
-    all_av_compare_2 = []
+    all_R1 = []
+    all_R2 = []
+    all_TFT1 = []
+    all_TFT2 = []
 
     for experiment in results["results"]["seeds"]:
-        av_R_1 = []
-        av_R_2 = []
-        av_compare_1 = []
-        av_compare_2 = []
+        epochs_R1 = []
+        epochs_R2 = []
+        epoch_TFT1 = []
+        epoch_TFT2 = []
 
         for epoch in experiment["epoch"]:
-            end_policy = np.array([epoch["P1"], epoch["P2"]])
+            epoch_policy = np.array([epoch["P1"], epoch["P2"]])
 
             # Calculated as an absolute difference between end policy and
-            comparison = 1 - np.mean(np.abs(end_policy - comparison_policy), 1)
+            # comparison = 1 - np.mean(np.abs(end_policy - comparison_policy), 1)
+            comparison = np.all(np.abs(epoch_policy - comparison_policy) < 0.5, 1, ).astype(int)
 
             # TFT likeliness percentage across both agents
-            av_compare_1.append(comparison[0])
-            av_compare_2.append(comparison[1])
+            epoch_TFT1.append(comparison[0])
+            epoch_TFT2.append(comparison[1])
 
-            V1, V2 = calculate_value_fn_from_policy(end_policy, r1, r2, gamma)
-            av_R_1.append(V1 * (1 - gamma))
-            av_R_2.append(V2 * (1 - gamma))
+            V1, V2 = calculate_value_fn_from_policy(epoch_policy, r1, r2, gamma)
+            epochs_R1.append(V1 * (1 - gamma))
+            epochs_R2.append(V2 * (1 - gamma))
 
-        all_av_R_1.append(av_R_1)
-        all_av_R_2.append(av_R_2)
-        all_av_compare_1.append(av_compare_1)
-        all_av_compare_2.append(av_compare_2)
+        all_R1.append(epochs_R1)
+        all_R2.append(epochs_R2)
+        all_TFT1.append(epoch_TFT1)
+        all_TFT2.append(epoch_TFT2)
 
-    return all_av_R_1, all_av_R_2, all_av_compare_1, all_av_compare_2
+    return all_R1, all_R2, all_TFT1, all_TFT2
 
 
-# Given a single experiment result in json format
-# return the average reward R per time step and standard deviation
-# over the repeat through all the iterations in each epoch
-# and calculate and return an overall average for those values
-def get_av_epoch_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]]):
-    all_av_R_1, all_av_R_2, all_av_compare_1, all_av_compare_2 =\
-        get_epoch_R_std_TFT(results, comparison_policy)
 
-    all_std_av_reward_1 = np.std(all_av_R_1, axis=0)
-    all_av_R_1 = np.mean(all_av_R_1, axis=0)
-
-    all_std_av_reward_2 = np.std(all_av_R_2, axis=0)
-    all_av_R_2 = np.mean(all_av_R_2, axis=0)
-
-    all_av_compare_1 = np.mean(all_av_compare_1, axis=0)
-    all_av_compare_2 = np.mean(all_av_compare_2, axis=0)
-
-    return all_av_R_1, all_std_av_reward_1, all_av_R_2, all_std_av_reward_2, all_av_compare_1, all_av_compare_2
+# def get_av_epoch_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]]):
+#     all_av_R_1, all_av_R_2, all_av_compare_1, all_av_compare_2 =\
+#         get_epoch_R_std_TFT(results, comparison_policy)
+#
+#     all_std_av_reward_1 = np.std(all_av_R_1, axis=0)
+#     all_av_R_1 = np.mean(all_av_R_1, axis=0)
+#
+#     all_std_av_reward_2 = np.std(all_av_R_2, axis=0)
+#     all_av_R_2 = np.mean(all_av_R_2, axis=0)
+#
+#     all_av_compare_1 = np.mean(all_av_compare_1, axis=0)
+#     all_av_compare_2 = np.mean(all_av_compare_2, axis=0)
+#
+#     return all_av_R_1, all_std_av_reward_1, all_av_R_2, all_std_av_reward_2, all_av_compare_1, all_av_compare_2

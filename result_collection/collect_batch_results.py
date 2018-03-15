@@ -74,6 +74,72 @@ def plot_1ax_policies(results, keys, title, show=True, figsize=(13, 8), colours=
         plt.savefig(filename+".pdf")
 
 
+def plot_1ax_R_std_TFT_through_epochs(results, keys, title, show=True, figsize=(13, 8), filename=None):
+    rows = np.shape(results)[-1]
+
+    fig, axes = plt.subplots(nrows=rows, ncols=1, sharex=True, sharey=True, figsize=figsize)
+    fig.text(0.5, 0.96, title, ha='center', fontsize=14)
+    fig.text(0.5, 0.02, 'Randomness, r, in initial policy parameter values \n'
+                        'drawn from a uniform distribution of [0.5-r, 0.5+r]', ha='center', fontsize=12)
+    fig.text(0.02, 0.5, 'Epochs', va='center', rotation='vertical', fontsize=12)
+
+    # X = [ [[av_R1, std_R1, av_TFT1], [av_R2, std_R2, av_TFT2]],
+    #       [[av_R1, std_R1, av_TFT1], [av_R2, std_R2, av_TFT2]], ... ]
+
+    colors = ["b", "r"]
+    labels = ["R", "TFT"]
+    symbols = ["x", "+"]
+
+    for r, ax in enumerate(axes):
+        X = results[:, :, :, r]
+
+        rt = 0
+        # Two agents
+        for a in range(2):
+            R = X[:, a]
+
+            avr_v1 = moving_average(R[:, 0], window_size=1)
+            min_v1 = moving_average(R[:, 0] - R[:, 1], window_size=1)
+            max_v1 = moving_average(R[:, 0] + R[:, 1], window_size=1)
+
+            x = np.arange(np.shape(avr_v1)[0])
+            ax.plot(x, avr_v1, colors[rt] + symbols[a], alpha=0.5, label="Agent " + str(a))
+            ax.fill_between(x, min_v1, max_v1, color=colors[rt], alpha=0.1)
+
+        ax.set_ylabel(labels[rt])
+        ax.set_title(keys[r])
+        ax.tick_params('y', colors=colors[rt])
+
+        ax2 = ax.twinx()
+        rt = 1
+        for a in range(2):
+            R = X[:, a]
+            avr_v1 = moving_average(R[:, 2], window_size=1)
+
+            x = np.arange(np.shape(avr_v1)[0])
+            ax2.plot(x, avr_v1, colors[rt] + symbols[a], alpha=0.5)
+
+        ax2.set_ylabel(labels[rt])
+        ax2.tick_params('y', colors=colors[rt])
+
+    plt.subplots_adjust(left=0.07, right=0.95, top=0.92, bottom=0.04, wspace=0.07, hspace=0.27)
+    handles, labels = ax.get_legend_handles_labels()
+
+    legend = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.51, 0.95),
+                        ncol=5, borderaxespad=0, fancybox=True)
+
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+    frame.set_alpha(1)
+
+    if show:
+        plt.show()
+    else:
+        if filename is None:
+            filename = title
+        plt.savefig(filename + ".pdf")
+
+
 def lolaom_dilemmas(folder="results/lolaom_dilemmas/"):
     game = "IPD"
     # game = "ISD"
@@ -324,9 +390,41 @@ def lola1_random_init_policy_robustness(folder="../results/lola1_random_init_pol
             sorted_results[i] = np.array(X)
 
     plot_1ax_policies(np.array(sorted_results), keys,
-                  "How randomness affects the policy of the {1} agents in the {0} game after playing 1000 iterations"
-                  "with random parameter initialisation".format(game, agents),
+          "How randomness affects the policy of the {1} agents in the {0} game after playing 1000 iterations"
+          "with random parameter initialisation".format(game, agents),
                       show=False, figsize=(200, 5), filename=folder[:-1])
+
+
+def lola1_random_init_policy_robustness_through_epochs(folder="../results/lola1_random_init_policy_robustness/", agents="LOLA1"):
+    game = "IPD"
+    results = collect_experiment_epoch_R_std_TFT(folder, "*{0}.json".format(game))
+
+    randomness = np.linspace(0, 0.5, 51)
+
+    keys = ["After training for {0} epochs".format(r*50) for r in np.linspace(0, 20, 21)]
+    sorted_results = [None for _ in randomness]
+
+    def index(filename):
+        return int(re.findall('R\d+', filename)[0][1:])
+
+    for filename, X in results.items():
+        i = index(filename)
+        if game in filename and i < len(sorted_results):
+            sorted_results[i] = np.array(X)
+
+    plot_1ax_R_std_TFT_through_epochs(np.array(sorted_results), keys,"How randomness in policy parameter initialisation"
+                                                                     " affects the end policy of the {1} agents in the "
+                                                                     "{0} game".format(game, agents),
+                                      show=False, figsize=(15, 40), filename=folder[:-1]+"_through_epochs")
+
+
+def lola1b_random_init_policy_robustness(folder="../results/lola1b_random_init_policy_robustness/", agents="LOLA1B"):
+    lola1_random_init_policy_robustness(folder, agents)
+
+
+def lola1b_random_init_policy_robustness_500(folder="../results/lola1b_random_init_policy_robustness/", agents="LOLA1B"):
+    lola1_random_init_policy_robustness_500(folder, agents)
+
 
 if __name__ == "__main__":
     # lolaom_dilemmas()
@@ -335,6 +433,9 @@ if __name__ == "__main__":
     # lolaom_policy_init()
     # lolaom_rollouts_small()
     # lolaom_random_init_long_epochs()
-    lola1_random_init_policy_robustness_500()
+    # lola1_random_init_policy_robustness_500()
+    # lola1b_random_init_policy_robustness()
+    # lola1b_random_init_policy_robustness_500()
+    lola1_random_init_policy_robustness_through_epochs()
     pass
 
