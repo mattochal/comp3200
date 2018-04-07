@@ -3,6 +3,8 @@ from subprocess import call
 import os
 import numpy as np
 import math
+from default_game_payoffs import default_payoffs
+
 
 WORKING_DIR = ""
 
@@ -92,17 +94,15 @@ def invoke_bash(program, flags, output_stream):
     call(instr)
 
 
-def invoke_dilemmas_qsubs(output_stream, other_flags, params, epochs, agent_pair, walltime):
+def invoke_dilemmas_qsubs(output_stream, other_flags, params, agent_pair, walltime):
     dilemmas = ["IPD", "ISD", "ISH"]
     for d in dilemmas:
-        invoke_dilemma_qsubs(d, output_stream, other_flags, params, epochs, agent_pair, walltime)
+        invoke_dilemma_qsubs(d, output_stream, other_flags, params, agent_pair, walltime)
 
 
-def invoke_dilemma_qsubs(d, output_stream, other_flags, params, epochs, agent_pair, walltime):
+def invoke_dilemma_qsubs(d, output_stream, other_flags, params, agent_pair, walltime):
     flags = other_flags[:]
-    flags.extend(["-p",
-                  """'simulation.game = {0}'""".format(json.dumps(d)),
-                  """'games.{0}.n = {1}'""".format(d, epochs)])
+    flags.extend(["-p"])
     flags.extend(params)
 
     # DON'T USE (for reference only):
@@ -409,17 +409,16 @@ def basic_experiments(folder="basic_experiments/"):
 
     if TEST:
         repeats = 1
-        epochs = 1
-        num = 0
-        length = 0
+        epoch_length = 5
+        num_rollout = 0
+        rollout_length = 0
     else:
         repeats = 1000
-        epochs = 200
-        num = 0
-        length = 0
+        epoch_length = 200
+        num_rollout = 0
+        rollout_length = 0
 
-    agent_pairs = ["lola1_vs_lola1", "nl_vs_nl", "lola1_vs_nl",
-                   "lola1b_vs_nl", "lola1b_vs_lola1", "lola1b_vs_lola1b"]
+    agent_pairs = ["lola1_vs_lola1", "nl_vs_nl", "lola1_vs_nl", "lola1b_vs_nl", "lola1b_vs_lola1", "lola1b_vs_lola1b"]
 
     games = ["IPD", "ISH", "ISD", "IMP"]
 
@@ -439,17 +438,21 @@ def basic_experiments(folder="basic_experiments/"):
 
             dist = "{" + """"name": "uniform", "params": [{0}, {1}]""".format(0, 1) + "}"
             params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats)),
-                      """'agent_pairs.{0}.rollout_length = {1}'""".format(agent_pair, length),
-                      """'agent_pairs.{0}.num_rollout = {1}'""".format(agent_pair, num),
+                      """'simulation.length = {0}'""".format(json.dumps(epoch_length)),
                       """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
-                      """'agent_pairs.{0}.eta = {1}'""".format(agent_pair, eta),
-                      """'agent_pairs.{0}.delta = {1}'""".format(agent_pair, delta),
-                      """'agent_pairs.{0}.beta = {1}'""".format(agent_pair, beta),
-                      """'agent_pairs.{0}.gamma = {1}'""".format(agent_pair, gamma),
-                      """'games.{0}.init_policy1 = {1}'""".format(game, json.dumps([None] * 5)),
-                      """'games.{0}.init_policy2 = {1}'""".format(game, json.dumps([None] * 5)),
-                      """'simulation.random_init_policy_dist = {0}'""".format(json.dumps(json.loads(dist)))]
-            invoke_dilemma_qsubs(game, sub_folder, flags, params, epochs, agent_pair=agent_pair, walltime=wall_time)
+                      """'simulation.game = {0}'""".format(json.dumps(game)),
+                      """'game.payoff1 = {0}'""".format(json.dumps(default_payoffs[game]["payoff1"])),
+                      """'game.payoff2 = {0}'""".format(json.dumps(default_payoffs[game]["payoff2"])),
+                      """'agent_pair.rollout_length = {0}'""".format(rollout_length),
+                      """'agent_pair.num_rollout = {0}'""".format(num_rollout),
+                      """'agent_pair.eta = {0}'""".format(eta),
+                      """'agent_pair.delta = {0}'""".format(delta),
+                      """'agent_pair.beta = {0}'""".format(beta),
+                      """'agent_pair.gamma = {0}'""".format(gamma),
+                      """'agent_pair.init_policy1 = {0}'""".format(json.dumps([None] * 5)),
+                      """'agent_pair.init_policy2 = {0}'""".format(json.dumps([None] * 5)),
+                      """'agent_pair.init_policy_dist = {0}'""".format(json.dumps(json.loads(dist)))]
+            invoke_dilemma_qsubs(game, sub_folder, flags, params, agent_pair=agent_pair, walltime=wall_time)
 
 
 TEST = True

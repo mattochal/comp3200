@@ -1,12 +1,12 @@
 import argparse
 import json
-# from LOLA_pytorch.LOLAOM_vs_LOLAOM import LOLAOM_VS_LOLAOM
 from myLOLA.LOLA_custom import *
 
 import time
 import sys, os
 import random
 import numpy as np
+import copy
 
 
 def load_config(args_to_sub, path="config.json"):
@@ -43,6 +43,7 @@ def subst(base_json, path, json_to_sub):
 
 def substitute(to_sub_list, json_input):
     for p in to_sub_list:
+        # print(p)
         json_input = subst(json_input, p.split("=")[0].strip().split("."), json.loads(p.split("=")[1]))
 
 
@@ -52,41 +53,48 @@ def draw_from_init_policy_dist(dist):
 
 
 def main(args):
+    np.random.seed(random.randint(0, 10000000))
+
+    # print(args.to_sub)
     config = load_config(args.to_sub)
-    results = {"config": config, "results": {"seeds": []}}
+    results = {"config": copy.deepcopy(config), "results": {"seeds": []}}
     game = config["simulation"]["game"]
     agent_pair_name = config["simulation"]["agent_pair"]
 
-    np.random.seed(random.randint(0, 10000000))
-    init_policy1_conf = config["games"][game]["init_policy1"][:]
-    init_policy2_conf = config["games"][game]["init_policy2"][:]
+    init_policy1_conf = config["agent_pair"]["init_policy1"][:]
+    init_policy2_conf = config["agent_pair"]["init_policy2"][:]
 
     print("Running:", agent_pair_name, game)
     for j in range(config["simulation"]["repeats"]):
-        init_policy1 = config["games"][game]["init_policy1"]
-        init_policy2 = config["games"][game]["init_policy2"]
+        init_policy1 = config["agent_pair"]["init_policy1"]
+        init_policy2 = config["agent_pair"]["init_policy2"]
 
+        # Replace None values in the policies with values drawn from distribution
         for i, p in enumerate(init_policy1_conf):
             if p is None:
-                init_policy1[i] = draw_from_init_policy_dist(config["simulation"]["random_init_policy_dist"])
+                init_policy1[i] = draw_from_init_policy_dist(config["agent_pair"]["init_policy_dist"])
 
         for i, p in enumerate(init_policy2_conf):
             if p is None:
-                init_policy2[i] = draw_from_init_policy_dist(config["simulation"]["random_init_policy_dist"])
+                init_policy2[i] = draw_from_init_policy_dist(config["agent_pair"]["init_policy_dist"])
 
-        start_time = time.time()
         seed = config["simulation"]["seed_start"] + j
         print("\tRun:", j, "Seed:", seed)
 
-        agent_pair_class = globals()[agent_pair_name.upper()]
-        agent_pair = agent_pair_class(config["agent_pairs"][agent_pair_name], config["games"][game])
+        # filter settings for run
+        all_settings = {**config["agent_pair"], **config["game"], **config["simulation"]}
+        run_settings = {k: v for k, v in all_settings.items() if k in run_signature}
+        other_settings = {k: v for k, v in all_settings.items() if k not in run_signature}
 
+        agent_pair_class = globals()[agent_pair_name.upper()]
+        agent_pair = agent_pair_class(run_settings, other_settings)
+
+        # Run the simulation timing how long it takes to complete
+        start_time = time.time()
         _, _, result = agent_pair.run(seed=seed)
-        results["results"]["seeds"].append(result)
         print("\tRun took: ", time.time() - start_time, "sec")
 
-    config["games"][game]["init_policy1"] = init_policy1_conf
-    config["games"][game]["init_policy2"] = init_policy1_conf
+        results["results"]["seeds"].append(result)
 
     save_results(results, args.output_folder + agent_pair_name + "_" + game + ".json")
 
@@ -100,6 +108,5 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_folder", help="output file", default="results/")
     parser.add_argument("-i", "--input", help="input config file in Json format", default="config.json")
     args = parser.parse_args(sys.argv[1:])
-    # print(sys.argv)
     main(args)
 
