@@ -1,21 +1,23 @@
-zip -r lolaom_ST_space.zip lolaom_ST_space/
+zip -r results.zip results/
 
-scp -r mo4g15@iridis4_a.soton.ac.uk:~/scheduling_internship_2017/high-low-value-freq-ratio.zip ./
+scp -r mo4g15@iridis4_a.soton.ac.uk:~/scheduling_internship_2017/results.zip ./
 scp -r mo4g15@iridis4_a.soton.ac.uk:~/scheduling_internship_2017/400-experiment-final.zip ./
 
-scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/lolaom_random_init_long_epochs.zip ./results/
+scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/lola1_random_init_policy_robustness.zip ./results/
 scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/lolaom_long_epochs.zip ./results/
-scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/lola_random_init_long_epochs.zip ./results/
+scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/results.zip
 
 zip lolaom_random_init_long_epochs.zip lolaom_random_init_long_epochs/
 zip lolaom_long_epochs.zip lolaom_long_epochs/
 
-unzip results/lolaom_random_init_long_epochs.zip
-unzip results/lolaom_long_epochs.zip
+unzip lola1_random_init_policy_robustness.zip results/
+unzip lola1b_random_init_policy_robustness.zip results/
 unzip results/lola_random_init_long_epochs.zip
 
-find . -maxdepth 1 -name "*.o5089*" -delete
-find . -maxdepth 1 -name "*.e5089*" -delete
+find . -maxdepth 1 -name "*.o509*" -delete
+find . -maxdepth 1 -name "*.e509*" -delete
+
+find . -maxdepth 1 -name "lolaom_*.zip" -delete
 
 find . -maxdepth 1 -name "*.e5095577*" -printf "\n%p\n" -exec cat {} \; | tail -1
 
@@ -49,9 +51,3 @@ Saving to high-low-value-freq-ratio-2/exp10/config.json
 4976544.blue101
 
 cat to_zip | zip -r 400-experiment-var-final -@
-
-
-
-
-
-

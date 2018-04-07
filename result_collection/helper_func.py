@@ -104,6 +104,20 @@ def collect_experiment_end_policies(folder, pattern='*.json', top=None):
 
 # Given a directory to a folder containing multiple result files stored in json format
 # return a dictionary keyed with file paths and the loaded policy
+def collect_experiment_epoch_policies(folder, pattern='*.json', top=None):
+    results = dict()
+    filenames = []
+    for filename in find_files(folder, pattern):
+        filenames.append(filename)
+
+    for filename in sorted(filenames)[:top]:
+        X = get_epoch_policies(load_results(filename))
+        results[filename] = X
+    return results
+
+
+# Given a directory to a folder containing multiple result files stored in json format
+# return a dictionary keyed with file paths and the loaded policy
 def collect_experiment_ith_policies(folder, i, pattern='*.json', top=None):
     results = dict()
     filenames = []
@@ -132,6 +146,22 @@ def collect_experiment_epoch_R_std_TFT(folder, pattern='*.json', top=None):
 
     return results
 
+
+def collect_experiment_end_R_std_TFT(folder, pattern='*.json', top=None, compare_policy=None, tolerance=0.5):
+    results = dict()
+    filenames = []
+    for filename in find_files(folder, pattern):
+        filenames.append(filename)
+
+    for filename in sorted(filenames)[:top]:
+        json_results = load_results(filename)
+
+        av_R1, std_R1, av_R2, std_R2, av_compare_1, av_compare_2 = \
+            get_av_end_R_std_TFT(json_results, compare_policy, tolerance)
+
+        results[filename] = np.array([[av_R1, std_R1, av_compare_1], [av_R2, std_R2, av_compare_2]])
+
+    return results
 
 # Given a single experiment result in json format
 # return the average reward R per time step and standard deviation
@@ -181,8 +211,8 @@ def calculate_value_fn_from_policy(end_policy, r1, r2, gamma):
 # return the average reward R per time step and standard deviation
 # and the similarity to a given comparison policy (assumed TFT)
 # as an average over all repeats
-def get_av_end_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]]):
-    av_R_1, av_R_2, av_compare_1, av_compare_2 = get_end_R_std_TFT(results, comparison_policy)
+def get_av_end_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]], tolerance=0.5):
+    av_R_1, av_R_2, av_compare_1, av_compare_2 = get_end_R_std_TFT(results, comparison_policy, tolerance)
 
     std_av_reward_1 = np.std(av_R_1)
     av_R_1 = np.mean(av_R_1)
@@ -200,8 +230,8 @@ def get_av_end_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 
 # return the average reward R per time step and standard deviation
 # and the similarity to a given comparison policy (assumed TFT)
 # for each individual repeat
-def get_end_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]]):
-
+def get_end_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]], tolerance=0.5):
+    comparison_policy = np.array(comparison_policy)
     # Get some info about the simulation experiment
     game = results["config"]["simulation"]["game"]
     agent_pair = results["config"]["simulation"]["agent_pair"]
@@ -221,7 +251,7 @@ def get_end_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 
         # Calculated as an absolute difference between end policy and
         # comparison = 1 - np.mean(np.abs(end_policy - comparison_policy), 1)
 
-        comparison = 1 - np.mean(np.abs(end_policy - comparison_policy), 1)
+        comparison = 1 if np.all(np.abs(end_policy - comparison_policy) < tolerance, 1) else 0
 
         # TFT likeliness percentage across both agents
         all_compare_1.append(comparison[0])
@@ -280,7 +310,6 @@ def get_epoch_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0
         all_TFT2.append(epoch_TFT2)
 
     return all_R1, all_R2, all_TFT1, all_TFT2
-
 
 
 # def get_av_epoch_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]]):

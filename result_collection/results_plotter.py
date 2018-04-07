@@ -1,31 +1,8 @@
 import json
 from collections import defaultdict
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 from result_collection.helper_func import *
-
-#
-# def load_results(path):
-#     with open(path, 'r') as f:
-#         data = json.load(f)
-#     return data
-#
-#
-# def get_policies(results):
-#     policies = []
-#     for experiment in results["results"]["seeds"]:
-#         policies.append([experiment["P1"], experiment["P2"]])
-#     return np.array(policies)
-#
-#
-# def get_epoch_policies(results):
-#     ps = []
-#     for experiment in results["results"]["seeds"]:
-#         p = []
-#         for epoch in experiment["epoch"]:
-#             p.append([epoch["P1"], epoch["P2"]])
-#         ps.append(p)
-#     return np.array(ps)
 
 
 def plot_policies(results):

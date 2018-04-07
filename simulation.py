@@ -1,8 +1,7 @@
 import argparse
 import json
-from LOLA_pytorch.LOLA_vs_LOLA import LOLA_VS_LOLA
-from LOLA_pytorch.LOLAOM_vs_LOLAOM import LOLAOM_VS_LOLAOM
-from LOLA_pytorch_complete.LOLA_custom import LOLA1_VS_LOLA1, LOLA1B_VS_LOLA1B
+# from LOLA_pytorch.LOLAOM_vs_LOLAOM import LOLAOM_VS_LOLAOM
+from myLOLA.LOLA_custom import *
 
 import time
 import sys, os
@@ -13,6 +12,8 @@ import numpy as np
 def load_config(args_to_sub, path="config.json"):
     with open(path, 'r') as f:
         data = json.load(f)
+    if "config" in data:
+        data = data["config"]
     if args_to_sub is not None:
         substitute(args_to_sub, data)
     return data
@@ -28,9 +29,16 @@ def subst(base_json, path, json_to_sub):
     if len(path) == 1:
         base_json[path[0]] = json_to_sub
         return base_json
-    else:
-        base_json[path[0]] = subst(base_json[path[0]], path[1::], json_to_sub)
-        return base_json
+
+    elif path[0] not in base_json:
+        sys.stderr.write("{0} not in base_json, creating it anyway\n".format(path[0]))
+        acc = base_json
+        for p in path[:-1]:
+            acc[p] = {}
+            acc = acc[p]
+
+    base_json[path[0]] = subst(base_json[path[0]], path[1::], json_to_sub)
+    return base_json
 
 
 def substitute(to_sub_list, json_input):

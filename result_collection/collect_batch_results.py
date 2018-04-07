@@ -80,7 +80,7 @@ def plot_1ax_R_std_TFT_through_epochs(results, keys, title, show=True, figsize=(
     fig, axes = plt.subplots(nrows=rows, ncols=1, sharex=True, sharey=True, figsize=figsize)
     fig.text(0.5, 0.96, title, ha='center', fontsize=14)
     fig.text(0.5, 0.02, 'Randomness, r, in initial policy parameter values \n'
-                        'drawn from a uniform distribution of [0.5-r, 0.5+r]', ha='center', fontsize=12)
+                        'drawn from a uniform distribution of [0.5-r/100, 0.5+r/100]', ha='center', fontsize=12)
     fig.text(0.02, 0.5, 'Epochs', va='center', rotation='vertical', fontsize=12)
 
     # X = [ [[av_R1, std_R1, av_TFT1], [av_R2, std_R2, av_TFT2]],
@@ -426,6 +426,10 @@ def lola1b_random_init_policy_robustness_500(folder="../results/lola1b_random_in
     lola1_random_init_policy_robustness_500(folder, agents)
 
 
+def lola1b_random_init_policy_robustness_through_epochs(folder="../results/lola1b_random_init_policy_robustness/", agents="LOLA1B"):
+    lola1_random_init_policy_robustness_through_epochs(folder, agents)
+
+
 if __name__ == "__main__":
     # lolaom_dilemmas()
     # lolaom_ST_space()
@@ -437,5 +441,5 @@ if __name__ == "__main__":
     # lola1b_random_init_policy_robustness()
     # lola1b_random_init_policy_robustness_500()
     lola1_random_init_policy_robustness_through_epochs()
+    # lola1b_random_init_policy_robustness_through_epochs()
     pass
-
