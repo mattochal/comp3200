@@ -109,13 +109,13 @@ def run(length=200, visualise=False, record_trajectory=False, payoff1=[-1, -3, 0
         # print("diff x1: ", (torch.sigmoid(y1) - x1).data.cpu().numpy())
         # print("diff x2: ", (torch.sigmoid(y2) - x2).data.cpu().numpy())
 
-        if epoch % 20 == 0 and visualise:
-            print('Epoch: ' + str(epoch))
-            print("x1: {}".format(x1.data.cpu().numpy().tolist()))
-            print("V1: {}".format(V1.data[0]))
-            print("x2: {}".format(x2.data.cpu().numpy().tolist()))
-            print("V2: {}".format(V2.data[0]))
-            print("Rewards: {}".format(av_return(x1, x2)))
+        # if epoch % 20 == 0 and visualise:
+        # print('Epoch: ' + str(epoch))
+        # print("x1: {}".format(x1.data.cpu().numpy().tolist()))
+        # print("V1: {}".format((V1 * (1-gamma)).data[0]))
+        # print("x2: {}".format(x2.data.cpu().numpy().tolist()))
+        # print("V2: {}".format((V2 * (1-gamma)).data[0]))
+        # print("Rewards: {}".format(av_return(x1, x2)))
 
     # return policy of both agents
     # print("init x1: {}".format(init_policy1))
@@ -168,7 +168,7 @@ class LOLA1B_VS_NL(AgentPairExact):
 
 class LOLA1B_VS_LOLA1(AgentPairExact):
     def run(self, seed):
-        self.parameters["agents"] = ["LOLA1B", "NL"]
+        self.parameters["agents"] = ["LOLA1B", "LOLA1"]
         return super(LOLA1B_VS_LOLA1, self).run(seed)
 
 

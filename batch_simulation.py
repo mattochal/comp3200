@@ -455,6 +455,61 @@ def basic_experiments(folder="basic_experiments/"):
             invoke_dilemma_qsubs(game, sub_folder, flags, params, agent_pair=agent_pair, walltime=wall_time)
 
 
+def basic_lola_replication(folder="basic_lola_replication_200_epochs/"):
+    global TEST
+    TEST = True
+    FOLDER_PREFIX = "results/"
+
+    path_to_folder = WORKING_DIR + FOLDER_PREFIX + folder
+    path_to_config = WORKING_DIR + "config.json"
+
+    repeats = 30
+    epoch_length = 200
+    num_rollout = 0
+    rollout_length = 0
+
+    agent_pairs = ["lola1_vs_lola1", "nl_vs_nl"]
+
+    games = ["IPD", "IMP"]
+
+    wall_time_offset = 0
+
+    etas = {"IPD": 1, "IMP": 1}
+    deltas = {"IPD": 1, "IMP": 1}
+
+    sigmas = {"IPD": 1, "IMP": 1}
+    gammas = {"IPD": 0.96, "IMP": 0.9}
+
+    beta = 1
+
+    for i, agent_pair in enumerate(agent_pairs):
+        for j, game in enumerate(games):
+            sub_folder = path_to_folder + "{0}/{1}/".format(game, agent_pair)
+            os.makedirs(sub_folder, exist_ok=True)
+            wall_time = humanize_time(wall_time_offset)
+            flags = ["-o", sub_folder, "-i", path_to_config]
+
+            dist = "{" + """"name": "normal", "params": [{0}, {1}]""".format(0, sigmas[game]) + "}"
+            eta = etas[game]
+            delta = deltas[game]
+            gamma = gammas[game]
+            params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats)),
+                      """'simulation.length = {0}'""".format(json.dumps(epoch_length)),
+                      """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
+                      """'simulation.game = {0}'""".format(json.dumps(game)),
+                      """'game.payoff1 = {0}'""".format(json.dumps(default_payoffs[game]["payoff1"])),
+                      """'game.payoff2 = {0}'""".format(json.dumps(default_payoffs[game]["payoff2"])),
+                      """'agent_pair.rollout_length = {0}'""".format(rollout_length),
+                      """'agent_pair.num_rollout = {0}'""".format(num_rollout),
+                      """'agent_pair.eta = {0}'""".format(eta),
+                      """'agent_pair.delta = {0}'""".format(delta),
+                      """'agent_pair.beta = {0}'""".format(beta),
+                      """'agent_pair.gamma = {0}'""".format(gamma),
+                      """'agent_pair.init_policy1 = {0}'""".format(json.dumps([None] * 5)),
+                      """'agent_pair.init_policy2 = {0}'""".format(json.dumps([None] * 5)),
+                      """'agent_pair.init_policy_dist = {0}'""".format(json.dumps(json.loads(dist)))]
+            invoke_dilemma_qsubs(game, sub_folder, flags, params, agent_pair=agent_pair, walltime=wall_time)
+
 TEST = True
 # TEST = False
 
@@ -482,5 +537,6 @@ if __name__ == "__main__":
     # random_init_long_epochs()
     # long_epochs()
     # randomness_robustness()
-    basic_experiments()
+    # basic_experiments()
+    basic_lola_replication()
     pass

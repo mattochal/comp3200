@@ -55,6 +55,26 @@ def exact(y1, y2, r1, r2, gamma):
     x1 = torch.sigmoid(y1)
     x2 = torch.sigmoid(y2)
 
+    # gamma -= gamma - 0.1
+    # my_O = Variable(torch.from_numpy(np.zeros((5, 1))).float())
+    # my_I = Variable(torch.eye(5).type(dtype))
+    #
+    # # State transition function, where axis = 1
+    # my_P = torch.cat((my_O, x1 * x2, x1 * (1 - x2), (1 - x1) * x2, (1 - x1) * (1 - x2)), 1)
+    # # P[i,j] is the probability of state i given state j
+    #
+    # # This is just the rearrangement of equations found in D. Silver's L2 p25: Solving the Bellman Equation
+    # # Ignoring the s0 state
+    # my_Zinv = torch.inverse(my_I - gamma * my_P[:, :])
+    #
+    # a_r1 = torch.cat((Variable(torch.Tensor([0])).type(dtype), r1))
+    # a_r2 = torch.cat((Variable(torch.Tensor([0])).type(dtype), r2))
+    #
+    # # These are the exact value functions of the agent 1 and 2
+    # # as a sum of the expected average reward given the probability of cooperation in state s0
+    # my_V1 = torch.matmul(a_r1, my_Zinv)[0]
+    # my_V2 = torch.matmul(a_r2, my_Zinv)[0]
+
     # State transition function, where axis = 1
     P = torch.cat((x1 * x2, x1 * (1 - x2), (1 - x1) * x2, (1 - x1) * (1 - x2)), 1)
 

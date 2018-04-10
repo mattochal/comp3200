@@ -21,7 +21,7 @@ def update(learner_type, agent, ys, dV, delta, eta, beta, ):
         # The for-loop exists as the gradients can only be calculated from scalar values
         dV2_do = dVo[opponent]
         d2Vo_doa = [torch.autograd.grad(dV2_do[i], ys[agent], create_graph=True)[0] for i in range(5)]
-        d2Vo_doa_Tensor = torch.cat([d2Vo_doa[i] for i in range(5)], 1)
+        d2Vo_doa_Tensor = torch.transpose(torch.cat([d2Vo_doa[i] for i in range(5)], 1), 0, 0)
 
         return (delta * dVa[agent] + delta * eta * torch.matmul(d2Vo_doa_Tensor, dVa[opponent])).data
 
