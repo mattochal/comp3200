@@ -252,6 +252,52 @@ def plot_policies_and_v_timeline(ordered_results, states=["s0", "CC", "CD", "DC"
     pass
 
 
+def plot_policy_walk_through_space(results, intervals, states=["s0", "CC", "CD", "DC", "DD"],
+                                   title="", filename_to_save="", prob_state="cooperation", top=[None, None]):
+    cols = len(intervals)
+    fig, axes = plt.subplots(nrows=1, ncols=cols, figsize=(14, 4), sharey=True, sharex=True)
+    plt.subplots_adjust(left=0.07, right=0.97, top=0.79, bottom=0.14, wspace=0.1, hspace=0.27)
+
+    colors = ["cyan", "blue", "orange", "green", "red"]
+
+    X = get_epoch_policies(results)
+    X = X[top[0]:top[1]]
+    agent_pair = results["config"]["simulation"]["agent_pair"]
+    pair = viewer_friendly_pair(agent_pair, as_list=True)
+
+    for c, ax in enumerate(axes):
+        start = intervals[c][0]
+        depth = intervals[c][1]
+
+        # PLot where the policies end up
+        for s in range(5):
+            ax.scatter(X[:, depth, 0, s], X[:, depth, 1, s], s=20, c=colors[s], alpha=0.5, label=states[s])
+
+        # walk through space
+        for repeat in X:
+            for s in range(5):
+                ax.plot(repeat[start:depth+1, 0, s], repeat[start:depth+1, 1, s], c=colors[s], alpha=0.25)
+
+        ax.set_title("[{0}:{1}]".format(start, depth))
+        ax.set_xticks(np.linspace(0, 1, 6))
+        ax.set_yticks(np.linspace(0, 1, 6))
+        # set_legend_ax(ax, ncols=5)
+
+    handles, labels = ax.get_legend_handles_labels()
+    legend = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.51, 0.95), ncol=5, borderaxespad=0, fancybox=True)
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+    frame.set_alpha(1)
+    fig.text(0.5, 0.96, title, ha='center', fontsize=14)
+    fig.text(0.5, 0.02, 'P({0} | state) for agent 0 ({1})'.format(prob_state, pair[0]), ha='center', fontsize=12)
+    fig.text(0.02, 0.5, 'P({0} | state) for agent 1 ({1})'.format(prob_state, pair[1]), va='center', rotation='vertical', fontsize=12)
+
+    # plt.show()
+    plt.savefig(filename_to_save)
+    pass
+
+
+
 if __name__ == "__main__":
     # plot_single_sim_run("results/lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
     plot_R_std_TFT_through_epochs("results/lola1_random_init_policy_robustness/R25/lola1_vs_lola1_IPD.json")

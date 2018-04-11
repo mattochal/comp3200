@@ -5,6 +5,7 @@ import json
 import numpy as np
 import scipy as sp
 import scipy.stats
+from collections import defaultdict
 
 
 def mean_confidence_interval(data, confidence=0.95):
@@ -431,3 +432,91 @@ def viewer_friendly_pair(agent_pair="lola1b_vs_nl", as_list=False):
         return [substitute[agents[0]], substitute[agents[2]]]
     return substitute[agents[0]] + " vs " + substitute[agents[2]]
 
+
+def find_the_similarities(dict1, dict2):
+    similarities = {}
+
+    if dict1 == dict2:
+        return dict1
+
+    elif isinstance(dict1, list) and isinstance(dict2, list):
+        same = True
+        for i, item in enumerate(dict1):
+            if item != dict2[i]:
+                same = False
+                break
+        if same:
+            return dict1
+
+    elif isinstance(dict1, dict) and isinstance(dict2, dict):
+        for k, v in dict1.items():
+            if k in dict2:
+                similar = find_the_similarities(v, dict2[k])
+                if similar != {}:
+                    similarities[k] = similar
+
+    return similarities
+
+
+def find_the_differences(dict1, dict2):
+    if dict1 == dict2:
+        return [{}, {}]
+
+    elif isinstance(dict1, list) and isinstance(dict2, list):
+        same = True
+        for i, item in enumerate(dict1):
+            if item != dict2[i]:
+                same = False
+                break
+        if same:
+            return [{}, {}]
+        else:
+            return [dict1, dict2]
+
+    elif isinstance(dict1, dict) and isinstance(dict2, dict):
+        sub_dict1 = {}
+        sub_dict2 = {}
+        for k in set(list(dict1.keys()) + list(dict2.keys())):
+            if k in dict1 and k in dict2:
+                diffs = find_the_differences(dict1[k], dict2[k])
+                if diffs[0] != {}:
+                    sub_dict1[k] = diffs[0]
+                if diffs[1] != {}:
+                    sub_dict2[k] = diffs[1]
+            elif k in dict1:
+                sub_dict1[k] = dict1[k]
+            elif k in dict2:
+                sub_dict2[k] = dict2[k]
+
+        return [sub_dict1, sub_dict2]
+    else:
+        return [dict1, dict2]
+
+
+def compress_differences(differences):
+    compressed = defaultdict(lambda: [])
+    for d in differences:
+        for k, v in d.items():
+            if v not in compressed[k]:
+                compressed[k].append(v)
+                if isinstance(v, (int, float)):
+                    compressed[k].sort()
+
+    return compressed
+
+
+def key_specific_similarity(key, dict_list):
+    different_key_values = []
+    common = []
+
+    for d in dict_list:
+        if key in d and d[key] not in different_key_values:
+            different_key_values.append(d[key])
+            common.append(d)
+
+    for i, k in enumerate(different_key_values):
+        for d in dict_list:
+            if d[key] == k:
+                common[i] = find_the_similarities(common[i], d)
+
+    return common
