@@ -292,13 +292,67 @@ def plot_policy_walk_through_space(results, intervals, states=["s0", "CC", "CD",
     fig.text(0.5, 0.02, 'P({0} | state) for agent 0 ({1})'.format(prob_state, pair[0]), ha='center', fontsize=12)
     fig.text(0.02, 0.5, 'P({0} | state) for agent 1 ({1})'.format(prob_state, pair[1]), va='center', rotation='vertical', fontsize=12)
 
-    # plt.show()
-    plt.savefig(filename_to_save)
+    plt.show()
+    # plt.savefig(filename_to_save)
     pass
 
+
+def plot_v_timelines_for_delta_eta(ordered_results, states = ["s0", "CC", "CD", "DC", "DD"], title = "", filename ="", prob_state ="cooperation", show=True, figsize=(10, 15)):
+    nrows = len(ordered_results)
+    fig, axes = plt.subplots(nrows=nrows, ncols=1, figsize=figsize, sharex=True, sharey=True)
+    plt.subplots_adjust(left=0.05, right=0.97, top=0.87, bottom=0.08, wspace=0.22, hspace=0.27)
+
+    # colors = ["cyan", "blue", "orange", "green", "red"]
+    pair_colours = ["blue", "cyan"]
+
+    agent_pair = ordered_results[0][0]["config"]["simulation"]["agent_pair"]
+    pair = viewer_friendly_pair(agent_pair, as_list=True)
+
+    # Two agents
+    for r, ax in enumerate(axes):
+        # delta = results["config"]["agent_pair"]["delta"]
+        etas_x = []
+        Y1 = []
+        Y2 = []
+
+        for c, results in enumerate(ordered_results[r]):
+            eta = results["config"]["agent_pair"]["eta"]
+            etas_x.append(eta)
+
+            av_R1, std_R1, _, av_R2, std_R2, _ = get_av_end_R_conf_TFT(results)
+            Y1.append([av_R1, std_R1])
+            Y2.append([av_R2, std_R2])
+
+        Y1 = np.array(Y1)
+        Y2 = np.array(Y2)
+        ax.errorbar(etas_x, Y1[:, 0], yerr=Y1[:, 1], fmt='o', ecolor='g', capthick=2, label="a{0} {1}".format(0, pair[0]))
+        ax.errorbar(etas_x, Y2[:, 0], yerr=Y2[:, 1], fmt='o', ecolor='g', capthick=2, label="a{0} {1}".format(1, pair[1]))
+
+        # ax.scatter([eta], avr_v1, c=pair_colours[a], alpha=0.5, label="a{0} {1}".format(a, pair[a]))
+        # ax.fill_between(x, min_v1, max_v1, color=pair_colours[a], alpha=0.1)
+        delta = ordered_results[0][0]["config"]["agent_pair"]["delta"]
+        ax.set_title("delta={0}".format(delta))
+        ax.set_ylabel('Average reward per step, R')
+
+    handles, labels = ax.get_legend_handles_labels()
+    print(labels[:2])
+    legend = fig.legend(handles[:2], labels[:2], loc='upper center', bbox_to_anchor=(0.51, 0.95), ncol=5, borderaxespad=0, fancybox=True)
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+    frame.set_alpha(1)
+    fig.text(0.5, 0.96, title, ha='center', fontsize=14)
+    fig.text(0.02, 0.5, r'$\eta$', ha='center', fontsize=12)
+    fig.text(0.5, 0.02, r'$\delta$', va='center', fontsize=12)
+
+    if show:
+        plt.show()
+    else:
+        plt.savefig(filename)
+    pass
 
 
 if __name__ == "__main__":
     # plot_single_sim_run("results/lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
-    plot_R_std_TFT_through_epochs("results/lola1_random_init_policy_robustness/R25/lola1_vs_lola1_IPD.json")
+    # plot_R_std_TFT_through_epochs("results/lola1_random_init_policy_robustness/R25/lola1_vs_lola1_IPD.json")
     # plot_average_value("results/result_lolaom_vs_lolaom_IPD.json")
+    plot_R_std_TFT_through_epochs("../results/lola_robust_delta_eta/D00/E00/lola1_vs_lola1_IPD.json")

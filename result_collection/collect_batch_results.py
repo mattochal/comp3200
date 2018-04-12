@@ -14,13 +14,13 @@ def plot_2ax_policies(results, keys, title, show=True, figsize=(13, 8), colours=
     fig.text(0.5, 0.02, 'P(cooperation | state) for agent 0', ha='center', fontsize=12)
     fig.text(0.02, 0.5, 'P(cooperation | state) for agent 1', va='center', rotation='vertical', fontsize=12)
 
-    colors = ["purple", "blue", "orange", "green", "red"]
+    colors = ["cyan", "blue", "orange", "green", "red"]
     state = ["s0", "CC", "CD", "DC", "DD"]
     for r, row in enumerate(axes):
         for c, ax in enumerate(row):
             X = results[r][c]
             for s in range(5):
-                ax.scatter(X[:, 0, s], X[:, 1, s], s=55, c=colors[s], alpha=0.5, label=state[s])
+                ax.scatter(X[:, 0, s], X[:, 1, s], s=25, c=colors[s], alpha=0.5, label=state[s])
             ax.set_title(keys[r][c], fontsize=11)
             if colours is not None:
                 ax.set_facecolor(colours[r][c])
@@ -164,19 +164,6 @@ def lolaom_dilemmas(folder="results/lolaom_dilemmas/"):
 
     plot_2ax_policies(np.array(sorted_results), keys, "How the number and length of rollouts affects the final policy "
                                                   "of the agents in the {0} game".format(game))
-    #
-    # def swap(nparray):
-    #     temp = np.copy(nparray[:, :, :, :, 1, 2])
-    #     nparray[:, :, :, :, 1, 2] = nparray[:, :, :, :, 1, 3]
-    #     nparray[:, :, :, :, 1, 3] = temp
-    #     return nparray
-    #
-    # variance  = np.var([ipd_results, ish_results, isd_results], axis=3)
-    # mean = np.mean([ipd_results, ish_results, isd_results], axis=3)
-    #
-    # [variance, mean] = swap(np.array([variance, mean]))
-    #
-    # print(ipd_results)
 
 
 def lolaom_ST_space(folder="results/lolaom_ST_space/"):

@@ -108,7 +108,7 @@ def collect_experiment_results(folder, pattern='*.json', top=None):
     for filename in find_files(folder, pattern):
         filenames.append(filename)
 
-    for filename in sorted(filenames)[:top]:
+    for filename in sorted(filenames): # [:top] + sorted(filenames)[10:top+10]:
         results[filename] = load_results(filename)
     return results
 
@@ -267,6 +267,21 @@ def get_av_end_R_std_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 
 
         av_compare_1 = np.mean(av_compare_1)
         av_compare_2 = np.mean(av_compare_2)
+
+    return av_R_1, std_av_reward_1, av_R_2, std_av_reward_2, av_compare_1, av_compare_2
+
+
+def get_av_end_R_conf_TFT(results, comparison_policy=[[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]], tolerance=0.5, joint=False):
+    av_R_1, av_R_2, av_compare_1, av_compare_2 = get_end_R_std_compare(results, comparison_policy, tolerance)
+
+    std_av_reward_1 = mean_confidence_interval(av_R_1)
+    std_av_reward_2 = mean_confidence_interval(av_R_2)
+
+    av_R_1 = np.mean(av_R_1)
+    av_R_2 = np.mean(av_R_2)
+
+    av_compare_1 = np.mean(av_compare_1)
+    av_compare_2 = np.mean(av_compare_2)
 
     return av_R_1, std_av_reward_1, av_R_2, std_av_reward_2, av_compare_1, av_compare_2
 

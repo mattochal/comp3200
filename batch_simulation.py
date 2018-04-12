@@ -526,7 +526,7 @@ def lola_robust_delta_eta(folder="lola_robust_delta_eta/"):
     path_to_folder = WORKING_DIR + FOLDER_PREFIX + folder
     path_to_config = WORKING_DIR + "config.json"
 
-    repeats = 200
+    repeats = 50
     epoch_length = 300
     num_rollout = 0
     rollout_length = 0
@@ -541,8 +541,10 @@ def lola_robust_delta_eta(folder="lola_robust_delta_eta/"):
 
     wall_time_offset = 60 * 60 * 1
 
-    ETA = np.linspace(0.1, 2.0, 20)
-    DELTA = np.linspace(0.1, 2.0, 20)
+    ETA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0, 5.0]
+    DELTA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0, 5.0]
+    # ETA = np.linspace(0.1, 2.0, 20)
+    # DELTA = np.linspace(0.1, 2.0, 20)
 
     for i, agent_pair in enumerate(agent_pairs):
         for j, game in enumerate(games):

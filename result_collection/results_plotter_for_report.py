@@ -1,7 +1,6 @@
 from result_collection.collect_batch_results import *
-from result_collection.helper_func import *
+from result_collection.helper_func import collect_experiment_results
 from result_collection.results_plotter import *
-
 
 
 def table_basic_experiments(folder="../results/basic_experiments/"):
@@ -208,162 +207,60 @@ def plot_sigmoid():
     plt.savefig("sigmoid.pdf")
 
 
-SUBS = {'repeats': lambda x: r'\# of repeats: {0}'.format(x),
-        'length': lambda x: r'\# of epochs: {0}'.format(x),
-        'delta': lambda x: r'$\delta={0}$'.format(x),
-        'eta': lambda x: r'$\eta={0}$'.format(x),
-        'beta': lambda x: r'$\beta={0}$'.format(x),
-        'init_policy_dist': lambda x: 'Initial policy distribution: {0}({1},{2})'.format(x["name"], x["params"][0], x["params"][1]),
-        'gamma': lambda x: r'$\gamma={0}$'.format(x),
-        'payoff1': lambda x: 'Payoff for agent 0: {0}'.format(x),
-        'payoff2': lambda x: 'Payoff for agent 1: {0}'.format(x),
-        'game': lambda x: 'Game: {0}'.format(x),
-        'agent_pair': lambda x: 'Agent pair: {0}'.format(viewer_friendly_pair(x))}
-
-SUBS_value_only = \
-       {'repeats': lambda x: r'\# of repeats: {0}'.format(x),
-        'length': lambda x: r'\# of epochs: {0}'.format(x),
-        'delta': lambda x: r'$\delta={0}$'.format(x),
-        'eta': lambda x: r'$\eta={0}$'.format(x),
-        'beta': lambda x: r'$\beta={0}$'.format(x),
-        'init_policy_dist': lambda x: 'Initial policy distribution: {0}({1},{2})'.format(x["name"], x["params"][0], x["params"][1]),
-        'gamma': lambda x: r'$\gamma={0}$'.format(x),
-        'payoff1': lambda x: 'Payoff 0: {0}'.format(x),
-        'payoff2': lambda x: 'Payoff 1: {0}'.format(x),
-        'game': lambda x: '{0}'.format(x),
-        'agent_pair': lambda x: '{0}'.format(viewer_friendly_pair(x))}
-
-IGNORE = ['__order', 'seed_start', 'rollout_length', 'num_rollout', 'init_policy1', 'init_policy2']
-
-
-def pprint_dict(my_dict, order=[[]]):
-    my_string = ""
-    row_num = 0
-    row_exists = False
-    for r, row in enumerate(order):
-        if row_exists:
-            my_string += r" \\ "
-
-        row_exists = False
-        value_exists = False
-        for c in row:
-            if c in my_dict:
-                if value_exists:
-                    my_string += ",   "
-                my_string += SUBS[c](my_dict[c])
-                row_exists = True
-                value_exists = True
-            else:
-                value_exists = False
-
-    return my_string
-
-
-def pprint_dict_list(dict_list, order=[[]]):
-    my_string = ""
-    row_num = 0
-
-    for r, my_dict in enumerate(dict_list):
-        if r != 0:
-            my_string += r" \\ "
-
-        value_exists = False
-        for c, k in enumerate(order):
-            if value_exists:
-                my_string += ",  "
-            if k in my_dict:
-                my_string += SUBS_value_only[k](my_dict[k])
-                value_exists = True
-            else:
-                value_exists = False
-
-    return my_string
-
-def print_experimental_setup():
-    folder = "../results/basic_lola_replication_50_epochs/"
+def lola_robust_delta_eta(folder="../results/lola_robust_delta_eta/"):
     results = collect_experiment_results(folder, "*.json")
 
-    flat_configs = []
+    agent_pair_order = ["lola1_vs_lola1"]
+    game_order = ["IPD"]
+    states = {"IPD": ["s0", "CC", "CD", "DC", "DD"]}
+    prob_states = {"IPD": "cooperation"}
+
+    ETA = np.linspace(0.1, 2.0, 10)
+    DELTA = np.linspace(0.1, 2.0, 10)
+
+    ordered_results = [[None] * len(ETA) for _ in range(len(DELTA))]
     for filename, X in results.items():
-        config = X["config"]
-        flat_config = {}
-        for k, v in config.items():
-            for k2, v2 in v.items():
-                flat_config[k2] = v2
-        flat_configs.append(flat_config)
+        delta = X["config"]["agent_pair"]["delta"]
+        eta = X["config"]["agent_pair"]["eta"]
+        delta_eta = filename.split(folder)[1].split("/")  # filename.split(folder)[1].split(".")[0][:-4] #
+        print(delta, eta)
+        e_idx = int(delta_eta[1][1:])
+        d_idx = int(delta_eta[0][1:])
+        ordered_results[d_idx][e_idx] = X
 
-    common_config = flat_configs[0]
-    for config in flat_configs[1:]:
-        common_config = find_the_similarities(common_config, config)
+    game = game_order[0]
+    plot_v_timelines_for_delta_eta(ordered_results, states[game],
+                                   prob_state=prob_states[game], show=False,
+                                   filename=folder + "lola_{0}_robust_delta_eta_R".format(game))
 
-    differences = []
-    for config in flat_configs:
-        differences.append(find_the_differences(config, common_config)[0])
 
-    order_common = [['game', 'payoff1', 'payoff2'],
-                    ['agent_pair'],
-                    ['repeats', 'length'],
-                    ['delta', 'eta', 'beta', 'gamma'],
-                    ['init_policy_dist']]
 
-    order_game = ['game', 'payoff1', 'payoff2', 'gamma']
-    order_agent = ['agent_pair']
+def lola_robust_delta_eta_policies_grid(folder="../results/lola_robust_delta_eta/"):
+    results = collect_experiment_results(folder, "*.json")
 
-    common_setup = pprint_dict(common_config, order=order_common)
-    game_setup = pprint_dict_list(key_specific_similarity("game", differences), order=order_game)
-    pair_setup = pprint_dict_list(key_specific_similarity("agent_pair", differences), order=order_agent)
+    agent_pair_order = ["lola1_vs_lola1"]
+    game_order = ["IPD"]
+    states = {"IPD": ["s0", "CC", "CD", "DC", "DD"]}
+    prob_states = {"IPD": "cooperation"}
 
-    latex = r"""\hline
-    \multirow{4}{*}{\begin{tabular}[x]{@{}c@{}}
-    Table~\ref{table:replication:IPDIMP:my1} \\
-    Figure~\ref{fig:replication-IPD:my_IPD} \\
-    Figure~\ref{fig:replication-IMP:my_IMP}
-    \end{tabular}}
-    & \textbf{Common}
-    & \multicolumn{1}{l|}{ \begin{tabular}[c]{@{}l@{}}
-    """ + common_setup + r"""
-    \end{tabular}} \\ \cline{2-3}
+    ETA = np.linspace(0.1, 2.0, 10)
+    DELTA = np.linspace(0.1, 2.0, 10)
 
-    & \textbf{Games}
-    & \multicolumn{1}{l|}{ \begin{tabular}[c]{@{}l@{}}
-    """ + game_setup + r"""
-    \end{tabular}} \\ \cline{2-3}
+    ordered_results = [[None] * len(ETA) for _ in range(len(DELTA))]
+    for filename, X in results.items():
+        delta = X["config"]["agent_pair"]["delta"]
+        eta = X["config"]["agent_pair"]["eta"]
+        delta_eta = filename.split(folder)[1].split("/")  # filename.split(folder)[1].split(".")[0][:-4] #
+        print(delta, eta)
+        e_idx = int(delta_eta[1][1:])
+        d_idx = int(delta_eta[0][1:])
+        ordered_results[d_idx][e_idx] = get_end_policies(X)
 
-    & \textbf{Pairs}
-    & \multicolumn{1}{l|}{ \begin{tabular}[c]{@{}l@{}}
-    """ + pair_setup + r"""
-    \end{tabular}} \\ \cline{2-3}
-
-    & \textbf{Comments}
-    & \multicolumn{1}{l|}{ \begin{tabular}[c]{@{}l@{}}
-    No Comment
-    \end{tabular}} \\ \hline
-    """
-
-    # latex = r"""\multirow{4}{*}{Table 2} & """ \
-    #         + r"""\textbf{Common setup} & """\
-    #         + r"""\multicolumn{1}{l|}{ \begin{tabular}[c]{@{}l@{}}""" + common_setup \
-    #         + r"""\end{tabular}} \\ \cline{2-3} """
-    # latex += "\n" + r""" & """ \
-    #          + r"""\textbf{Games} & """ \
-    #          + r"""\multicolumn{1}{l|}{ \begin{tabular}[c]{@{}l@{}}""" + game_setup \
-    #          + r"""\end{tabular}} \\ \cline{2-3} """
-    # latex += "\n" + r""" & """ \
-    #          + r"""\textbf{Agent Pairs} & """ \
-    #          + r"""\multicolumn{1}{l|}{ \begin{tabular}[c]{@{}l@{}}""" + pair_setup \
-    #          + r"""\end{tabular}} \\ \cline{2-3} """
-    # latex += "\n" + r""" & """ \
-    #          + r"""\textbf{Comments} & """ \
-    #          + r"""\multicolumn{1}{l|}{ \begin{tabular}[c]{@{}l@{}}""" + "No Comment" \
-    #          + r"""\end{tabular}} \\ \hline """
-
-    # latex += "\n" + r""" & \textbf{Agent Pairs} & \begin{tabular}[c]{@{}l@{}} \multicolumn{1}{l|}{""" + pair_setup + r"""} \end{tabular} \\ \cline{2-3}"""
-    # latex += "\n" + r""" & \textbf{Comments} & \begin{tabular}[c]{@{}l@{}} \multicolumn{1}{l|}{""" + "No Comment" + r"""} \end{tabular} \\ \hline"""
-
-    print(latex)
-    # print(common_config)
-    # print(key_specific_similarity("game", differences))
-    # print(key_specific_similarity("agent_pair", differences))
+    game = game_order[0]
+    keys = [[r"$\delta={0:.4f}, \eta={1:.4f}$".format(d, e) for e in ETA] for d in DELTA]
+    plot_2ax_policies(np.array(ordered_results), keys, "",
+                      filename=folder + "lola_{0}_robust_delta_eta_policies_grid".format(game),
+                      show=False, figsize=(30, 30))
 
 
 if __name__ == "__main__":
@@ -372,4 +269,5 @@ if __name__ == "__main__":
     # basic_experiment_replications_figure()
     # basic_experiment_replications_walk_through_space_figure()
     # plot_sigmoid()
-    print_experimental_setup()
+    lola_robust_delta_eta()
+    # lola_robust_delta_eta_policies_grid()
