@@ -1,6 +1,7 @@
 from preliminary.Agents.agent import Agent
-
+from preliminary.Core.exploration import EGreedyExploration
 from preliminary.Core.belief import Belief
+import numpy as np
 
 
 class QBelief(Belief):

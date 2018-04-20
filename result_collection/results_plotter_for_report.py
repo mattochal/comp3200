@@ -2,6 +2,26 @@ from result_collection.collect_batch_results import *
 from result_collection.helper_func import collect_experiment_results
 from result_collection.results_plotter import *
 
+STATES = {"IPD": ["s0", "CC", "CD", "DC", "DD"],
+          "ISH": ["s0", "SS", "SH", "HS", "HH"],
+          "ISD": ["s0", "SS", "SD", "DS", "DD"],
+          "IMP": ["s0", "HH", "HT", "TH", "TT"]}
+
+PROB_STATE_LABLES = {"IPD": "cooperation",
+                     "ISH": "stag",
+                     "ISD": "stop",
+                     "IMP": "heads"}
+
+COMPARISON = {"IPD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
+              "ISH": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
+              "ISD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
+              "IMP": [[0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5]]}
+
+TOLERANCE = {"IPD": 0.5,
+             "ISH": 0.5,
+             "ISD": 0.5,
+             "IMP": 0.25}
+
 
 def table_basic_experiments(folder="../results/basic_experiments/"):
     results = collect_experiment_results(folder, "*.json")
@@ -10,16 +30,6 @@ def table_basic_experiments(folder="../results/basic_experiments/"):
                         "lola1b_vs_nl", "lola1b_vs_lola1", "lola1b_vs_lola1b"]
 
     game_order = ["IPD", "ISH", "ISD", "IMP"]
-
-    comparison_policies = {"IPD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
-                           "ISH": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
-                           "ISD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
-                           "IMP": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]]}
-
-    tolerances = {"IPD": 0.5,
-                  "ISH": 0.5,
-                  "ISD": 0.5,
-                  "IMP": 0.5}
 
     # storing [R std %compare] for two players, for all pairs and games
     table = np.zeros((len(agent_pair_order), len(game_order), 2, 3)) * 0.0
@@ -31,7 +41,7 @@ def table_basic_experiments(folder="../results/basic_experiments/"):
         pair_idx = agent_pair_order.index(pair)
 
         av_R1, std_R1, av_R2, std_R2, av_compare_1, av_compare_2 = \
-            get_av_end_R_std_TFT(X, comparison_policies[game], tolerances[game], joint=True)
+            get_av_end_R_std_TFT(X, COMPARISON[game], TOLERANCE[game], joint=True)
 
         for i, v in enumerate([av_R1, std_R1, av_compare_1]):
             table[pair_idx][game_idx][0][i] = v
@@ -65,21 +75,6 @@ def basic_experiment_replications_table(folder="../results/basic_lola_replicatio
 
     game_order = ["IPD", "IMP"]  # "ISH", "ISD",
 
-    comparison_policies = {"IPD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
-                           "ISH": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
-                           "ISD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
-                           "IMP": [[0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5]]}
-
-    tolerances = {"IPD": 0.5,
-                  "ISH": 0.5,
-                  "ISD": 0.5,
-                  "IMP": 0.25}
-
-    states = {"IPD": ["s0", "CC", "CD", "DC", "DD"],
-              "ISH": ["s0", "SS", "SH", "HS", "HH"],
-              "ISD": ["s0", "SS", "SD", "DS", "DD"],
-              "IMP": ["s0", "HH", "HT", "TH", "TT"]}
-
     # storing [R std %compare] for two players, for all pairs and games
     table = np.zeros((len(agent_pair_order), len(game_order), 2, 3)) * 0.0
 
@@ -92,7 +87,7 @@ def basic_experiment_replications_table(folder="../results/basic_lola_replicatio
             pair_idx = agent_pair_order.index(pair)
 
             av_R1, std_R1, av_R2, std_R2, av_compare_1, av_compare_2 = \
-                get_av_end_R_std_TFT(X, comparison_policies[game], tolerances[game], joint=True)
+                get_av_end_R_std_TFT(X, COMPARISON[game], TOLERANCE[game], joint=True)
 
             for i, v in enumerate([av_R1, std_R1, av_compare_1]):
                 table[pair_idx][game_idx][0][i] = v
@@ -127,26 +122,6 @@ def basic_experiment_replications_figure(folder="../results/basic_lola_replicati
 
     game_order = ["IPD", "IMP"]  # "ISH", "ISD",
 
-    # comparison_policies = {"IPD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
-    #                        "ISH": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
-    #                        "ISD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
-    #                        "IMP": [[0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5]]}
-    #
-    # tolerances = {"IPD": 0.5,
-    #               "ISH": 0.5,
-    #               "ISD": 0.5,
-    #               "IMP": 0.25}
-
-    states = {"IPD": ["s0", "CC", "CD", "DC", "DD"],
-              "ISH": ["s0", "SS", "SH", "HS", "HH"],
-              "ISD": ["s0", "SS", "SD", "DS", "DD"],
-              "IMP": ["s0", "HH", "HT", "TH", "TT"]}
-
-    prob_states = {"IPD": "cooperation",
-                   "ISH": "stag",
-                   "ISD": "stop",
-                   "IMP": "heads"}
-
     ordered_results = [[None]*len(game_order) for _ in range(len(agent_pair_order))]
     for filename, X in results.items():
         game = filename.split(folder)[1].split("/")[0]  # filename.split(folder)[1].split(".")[0][-3:] #
@@ -158,8 +133,8 @@ def basic_experiment_replications_figure(folder="../results/basic_lola_replicati
             ordered_results[game_idx][pair_idx] = X
 
     for g, game in enumerate(game_order):
-        plot_policies_and_v_timeline(ordered_results[g], states[game], filename_to_save=folder + "my_" + game + ".pdf",
-                                     prob_state=prob_states[game])
+        plot_policies_and_v_timeline(ordered_results[g], STATES[game], filename_to_save=folder + "my_" + game + ".pdf",
+                                     prob_state=PROB_STATE_LABLES[game])
 
 
 def basic_experiment_replications_walk_through_space_figure(folder="../results/basic_lola_replication_200_epochs/"):
@@ -167,8 +142,6 @@ def basic_experiment_replications_walk_through_space_figure(folder="../results/b
 
     agent_pair_order = ["nl_vs_nl", "lola1_vs_lola1"]
     game_order = ["IPD", "IMP"]
-    states = {"IPD": ["s0", "CC", "CD", "DC", "DD"], "IMP": ["s0", "HH", "HT", "TH", "TT"]}
-    prob_states = {"IPD": "cooperation", "IMP": "heads"}
 
     intervals = [[0, 4], [4, 9], [9, 49], [49, 99], [99, 199]]
     # intervals = [[0, i] for i in [3, 10, 50, 100, 199]]
@@ -185,7 +158,7 @@ def basic_experiment_replications_walk_through_space_figure(folder="../results/b
 
     for p, pair in enumerate(agent_pair_order):
         for g, game in enumerate(game_order):
-            plot_policy_walk_through_space(ordered_results[g][p], intervals, states[game], prob_state=prob_states[game],
+            plot_policy_walk_through_space(ordered_results[g][p], intervals, STATES[game], prob_state=PROB_STATE_LABLES[game],
                                          filename_to_save=folder + "my_" + pair + "_" + game + "_space_walk_5.pdf", top=[None, 5])
 
 
@@ -208,31 +181,32 @@ def plot_sigmoid():
 
 
 def lola_robust_delta_eta(folder="../results/lola_robust_delta_eta/"):
-    results = collect_experiment_results(folder, "*.json")
-
-    agent_pair_order = ["lola1_vs_lola1"]
     game_order = ["IPD"]
-    states = {"IPD": ["s0", "CC", "CD", "DC", "DD"]}
-    prob_states = {"IPD": "cooperation"}
+    game = game_order[0]
+    agent_pair_order = ["lola1_vs_lola1"]
 
-    ETA = np.linspace(0.1, 2.0, 10)
-    DELTA = np.linspace(0.1, 2.0, 10)
+    results = collect_experiment_results(folder, "*{0}.json".format(game))
 
-    ordered_results = [[None] * len(ETA) for _ in range(len(DELTA))]
+    ETA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0]
+    DELTA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0]
+    # ETA = np.linspace(0.1, 2.0, 10)#[:4]
+    # DELTA = np.linspace(0.1, 2.0, 10)#[:2]
+
+    ordered_results = [[None] * len(DELTA) for _ in range(len(ETA))]
+    titles = [None] * len(DELTA)
     for filename, X in results.items():
         delta = X["config"]["agent_pair"]["delta"]
         eta = X["config"]["agent_pair"]["eta"]
         delta_eta = filename.split(folder)[1].split("/")  # filename.split(folder)[1].split(".")[0][:-4] #
-        print(delta, eta)
-        e_idx = int(delta_eta[1][1:])
-        d_idx = int(delta_eta[0][1:])
-        ordered_results[d_idx][e_idx] = X
+        if delta in DELTA and eta in ETA:
+            e_idx = int(delta_eta[1][1:])
+            d_idx = int(delta_eta[0][1:])
+            ordered_results[e_idx][d_idx] = X
+            titles[d_idx] = r"$\eta={0}$".format(eta)
 
-    game = game_order[0]
-    plot_v_timelines_for_delta_eta(ordered_results, states[game],
-                                   prob_state=prob_states[game], show=False,
-                                   filename=folder + "lola_{0}_robust_delta_eta_R".format(game))
-
+    plot_v_timelines_for_delta_eta_combined_plot(ordered_results, STATES[game], titles=titles,
+                                                  prob_state=PROB_STATE_LABLES[game], show=True,
+                                                  filename=folder + "lola_{0}_robust_delta_eta_R".format(game))
 
 
 def lola_robust_delta_eta_policies_grid(folder="../results/lola_robust_delta_eta/"):
@@ -240,27 +214,81 @@ def lola_robust_delta_eta_policies_grid(folder="../results/lola_robust_delta_eta
 
     agent_pair_order = ["lola1_vs_lola1"]
     game_order = ["IPD"]
-    states = {"IPD": ["s0", "CC", "CD", "DC", "DD"]}
-    prob_states = {"IPD": "cooperation"}
 
-    ETA = np.linspace(0.1, 2.0, 10)
-    DELTA = np.linspace(0.1, 2.0, 10)
+    ETA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0, 5.0]
+    DELTA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0, 5.0]
 
     ordered_results = [[None] * len(ETA) for _ in range(len(DELTA))]
     for filename, X in results.items():
         delta = X["config"]["agent_pair"]["delta"]
         eta = X["config"]["agent_pair"]["eta"]
         delta_eta = filename.split(folder)[1].split("/")  # filename.split(folder)[1].split(".")[0][:-4] #
-        print(delta, eta)
-        e_idx = int(delta_eta[1][1:])
-        d_idx = int(delta_eta[0][1:])
-        ordered_results[d_idx][e_idx] = get_end_policies(X)
+        if delta in DELTA and eta in ETA:
+            e_idx = int(delta_eta[1][1:])
+            d_idx = int(delta_eta[0][1:])
+            ordered_results[d_idx][e_idx] = get_end_policies(X)
+            # titles[d_idx] = r"$\detla={0}$".format(delta)
 
     game = game_order[0]
-    keys = [[r"$\delta={0:.4f}, \eta={1:.4f}$".format(d, e) for e in ETA] for d in DELTA]
+    keys = [[r"$\delta={0:.2f}, \eta={1:.2f}$".format(d, e) for e in ETA] for d in DELTA]
     plot_2ax_policies(np.array(ordered_results), keys, "",
-                      filename=folder + "lola_{0}_robust_delta_eta_policies_grid".format(game),
-                      show=False, figsize=(30, 30))
+                      filename=folder + "lola_{0}_robust_delta_eta_policies_grid.pdf".format(game),
+                      show=False, figsize=(30, 30), prob_state=PROB_STATE_LABLES[game], states=STATES[game])
+
+
+def lola_robust_delta_eta_R_conv_tft2_graph(folder="../results/lola_robust_delta_eta/"):
+    ETA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0]
+    DELTA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0]
+    agent_pair_order = ["lola1_vs_lola1"]
+    game = "IPD"
+
+    delta = None
+    eta = 1
+
+    if delta is not None:
+        d_idx = DELTA.index(delta)
+        pattern = "*D0" + str(d_idx) + "*"+game+".json"
+        ordered_results = [None] * len(ETA)
+    else:
+        e_idx = ETA.index(eta)
+        pattern = "*E0" + str(e_idx) + "*"+game+".json"
+        ordered_results = [None] * len(DELTA)
+
+    results = collect_experiment_results(folder, pattern)
+
+    for filename, X in results.items():
+        d = X["config"]["agent_pair"]["delta"]
+        e = X["config"]["agent_pair"]["eta"]
+        delta_eta = filename.split(folder)[1].split("/")  # filename.split(folder)[1].split(".")[0][:-4] #
+        if d in DELTA and e in ETA:
+            e_idx = int(delta_eta[1][1:])
+            d_idx = int(delta_eta[0][1:])
+            if delta is not None:
+                ordered_results[e_idx] = X
+            else:
+                ordered_results[d_idx] = X
+
+    plot_delta_eta_row_col_benchmarks(ordered_results, show=False, delta_or_eta="eta" if delta is not None else "delta",
+                                      filename=folder + "lola_{0}_robust_delta_eta_graph_e100.pdf".format(game))
+
+
+def lola_robust_to_random_policy_init(folder="../results/lola1_random_init_policy_robustness/"):
+    game = "IPD"
+    results = collect_experiment_results(folder, "*{0}.json".format(game))
+
+    randomness = np.linspace(0, 0.5, 51)
+    sorted_results = [None for _ in randomness]
+
+    ith = 1000
+
+    def index(filename):
+        return int(re.findall('R\d+', filename)[0][1:])
+
+    for filename, X in results.items():
+        i = index(filename)
+        if game in filename and i < len(sorted_results):
+            sorted_results[i] = get_ith_policies(results, ith)
+
 
 
 if __name__ == "__main__":
@@ -269,5 +297,6 @@ if __name__ == "__main__":
     # basic_experiment_replications_figure()
     # basic_experiment_replications_walk_through_space_figure()
     # plot_sigmoid()
-    lola_robust_delta_eta()
-    # lola_robust_delta_eta_policies_grid()
+    # lola_robust_delta_eta()
+    lola_robust_delta_eta_policies_grid()
+    # lola_robust_delta_eta_R_conv_tft2_graph()

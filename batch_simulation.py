@@ -574,6 +574,59 @@ def lola_robust_delta_eta(folder="lola_robust_delta_eta/"):
                     invoke_dilemma_qsubs(game, sub_folder, flags, params, agent_pair=agent_pair, walltime=wall_time)
 
 
+def lola_through_ST_space(folder="lola_through_ST_space/"):
+    path_to_folder = WORKING_DIR + FOLDER_PREFIX + folder
+    path_to_config = WORKING_DIR + "config.json"
+
+    if TEST:
+        repeats = 3
+        epoch_length = 2
+    else:
+        repeats = 50
+        epoch_length = 1000
+
+    num_rollout = 0
+    rollout_length = 0
+    beta = 0
+
+    agent_pairs = ["lola1_vs_lola1", "lola1b_vs_lola1", "lola1b_vs_lola1b"]
+    sigma = 1  # for normal dist
+    gamma = 0.96
+    eta = 1
+    delta = 1
+    R = 1.0
+    P = 0.0
+    S = np.linspace(-1.0, 1.0, num=9)
+    T = np.linspace(0.0, 2.0, num=9)
+
+    wall_time_offset = 60 * 60
+    game = "unspecified"
+
+    for i, agent_pair in enumerate(agent_pairs):
+        for j, s in enumerate(S):
+            for k, t in enumerate(T):
+                sub_folder = path_to_folder + "S{0:02d}/T{1:02d}/".format(j, k)
+                os.makedirs(sub_folder, exist_ok=True)
+                wall_time = humanize_time(wall_time_offset)
+                flags = ["-o", sub_folder, "-i", path_to_config]
+                dist = "{" + """"name": "normal", "params": [{0}, {1}]""".format(0, sigma) + "}"
+                params = ["""'simulation.repeats = {0}'""".format(json.dumps(repeats)),
+                          """'simulation.length = {0}'""".format(json.dumps(epoch_length)),
+                          """'simulation.agent_pair = {0}'""".format(json.dumps(agent_pair)),
+                          """'simulation.game = {0}'""".format(json.dumps(game)),
+                          """'game.payoff1 = {0}'""".format([R, s, t, P]),
+                          """'game.payoff2 = {0}'""".format([R, t, s, P]),
+                          """'agent_pair.rollout_length = {0}'""".format(rollout_length),
+                          """'agent_pair.num_rollout = {0}'""".format(num_rollout),
+                          """'agent_pair.eta = {0}'""".format(eta),
+                          """'agent_pair.delta = {0}'""".format(delta),
+                          """'agent_pair.beta = {0}'""".format(beta),
+                          """'agent_pair.gamma = {0}'""".format(gamma),
+                          """'agent_pair.init_policy1 = {0}'""".format(json.dumps([None] * 5)),
+                          """'agent_pair.init_policy2 = {0}'""".format(json.dumps([None] * 5)),
+                          """'agent_pair.init_policy_dist = {0}'""".format(json.dumps(json.loads(dist)))]
+                invoke_dilemma_qsubs(game, sub_folder, flags, params, agent_pair=agent_pair, walltime=wall_time)
+
 # TEST = True
 TEST = False
 
@@ -583,7 +636,8 @@ TEST = False
 # AGENT_PAIR = "lola_vs_lola"
 # FOLDER_PREFIX = "results/lola_"
 
-AGENT_PAIR = "lola1_vs_lola1"
+# AGENT_PAIR = "lola1_vs_lola1"
+AGENT_PAIR = ""
 FOLDER_PREFIX = "results/"
 #
 # AGENT_PAIR = "lola1b_vs_lola1b"
@@ -603,5 +657,6 @@ if __name__ == "__main__":
     # randomness_robustness()
     # basic_experiments()
     # basic_lola_replication()
-    lola_robust_delta_eta()
+    # lola_robust_delta_eta()
+    lola_through_ST_space()
     pass

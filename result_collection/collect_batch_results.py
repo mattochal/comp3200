@@ -5,22 +5,22 @@ import re
 from result_collection.helper_func import *
 
 
-def plot_2ax_policies(results, keys, title, show=True, figsize=(13, 8), colours=None, filename=None):
+def plot_2ax_policies(results, keys, title, show=True, figsize=(13, 8), colours=None, filename=None, prob_state="cooperation", states=["s0", "CC", "CD", "DC", "DD"]):
     rows = np.shape(results)[0]
     cols = np.shape(results)[1]
 
     fig, axes = plt.subplots(nrows=rows, ncols=cols, sharex=True, sharey=True, figsize=figsize)
     fig.text(0.5, 0.96, title, ha='center', fontsize=14)
-    fig.text(0.5, 0.02, 'P(cooperation | state) for agent 0', ha='center', fontsize=12)
-    fig.text(0.02, 0.5, 'P(cooperation | state) for agent 1', va='center', rotation='vertical', fontsize=12)
+    fig.text(0.5, 0.02, 'P({0} | state) for agent 0'.format(prob_state), ha='center', fontsize=12)
+    fig.text(0.02, 0.5, 'P({0} | state) for agent 1'.format(prob_state), va='center', rotation='vertical', fontsize=12)
 
     colors = ["cyan", "blue", "orange", "green", "red"]
-    state = ["s0", "CC", "CD", "DC", "DD"]
+
     for r, row in enumerate(axes):
         for c, ax in enumerate(row):
             X = results[r][c]
             for s in range(5):
-                ax.scatter(X[:, 0, s], X[:, 1, s], s=25, c=colors[s], alpha=0.5, label=state[s])
+                ax.scatter(X[:, 0, s], X[:, 1, s], s=25, c=colors[s], alpha=0.5, label=states[s])
             ax.set_title(keys[r][c], fontsize=11)
             if colours is not None:
                 ax.set_facecolor(colours[r][c])
@@ -425,7 +425,7 @@ if __name__ == "__main__":
     # lolaom_rollouts_small()
     # lolaom_random_init_long_epochs()
     # lola1_random_init_policy_robustness_500()
-    # lola1b_random_init_policy_robustness()
+    # lola1_random_init_policy_robustness()
     # lola1b_random_init_policy_robustness_500()
     lola1_random_init_policy_robustness_through_epochs()
     # lola1b_random_init_policy_robustness_through_epochs()
