@@ -7,10 +7,10 @@ STATES = {"IPD": ["s0", "CC", "CD", "DC", "DD"],
           "ISD": ["s0", "SS", "SD", "DS", "DD"],
           "IMP": ["s0", "HH", "HT", "TH", "TT"]}
 
-PROB_STATE_LABLES = {"IPD": "cooperation",
+PROB_STATE_LABLES = {"IPD": "C",
                      "ISH": "stag",
                      "ISD": "stop",
-                     "IMP": "heads"}
+                     "IMP": "H"}
 
 COMPARISON = {"IPD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
               "ISH": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
@@ -143,7 +143,7 @@ def basic_experiment_replications_walk_through_space_figure(folder="../results/b
     agent_pair_order = ["nl_vs_nl", "lola1_vs_lola1"]
     game_order = ["IPD", "IMP"]
 
-    intervals = [[0, 4], [4, 9], [9, 49], [49, 99], [99, 199]]
+    intervals = [[0, 4], [4, 9], [9, 49], [49, 199]]
     # intervals = [[0, i] for i in [3, 10, 50, 100, 199]]
 
     ordered_results = [[None] * len(game_order) for _ in range(len(agent_pair_order))]
@@ -158,8 +158,8 @@ def basic_experiment_replications_walk_through_space_figure(folder="../results/b
 
     for p, pair in enumerate(agent_pair_order):
         for g, game in enumerate(game_order):
-            plot_policy_walk_through_space(ordered_results[g][p], intervals, STATES[game], prob_state=PROB_STATE_LABLES[game],
-                                         filename_to_save=folder + "my_" + pair + "_" + game + "_space_walk_5.pdf", top=[None, 5])
+            plot_policy_walk_through_space(ordered_results[g][p], intervals, STATES[game], prob_state=PROB_STATE_LABLES[game], figsize=(10, 3),
+                                           filename_to_save=folder + "my_" + pair + "_" + game + "_space_walk_all.pdf", top=[None, None])
 
 
 def plot_sigmoid():
@@ -242,8 +242,8 @@ def lola_robust_delta_eta_R_conv_tft2_graph(folder="../results/lola_robust_delta
     agent_pair_order = ["lola1_vs_lola1"]
     game = "IPD"
 
-    delta = None
-    eta = 1
+    delta = 1
+    eta = None
 
     if delta is not None:
         d_idx = DELTA.index(delta)
@@ -269,7 +269,7 @@ def lola_robust_delta_eta_R_conv_tft2_graph(folder="../results/lola_robust_delta
                 ordered_results[d_idx] = X
 
     plot_delta_eta_row_col_benchmarks(ordered_results, show=False, delta_or_eta="eta" if delta is not None else "delta",
-                                      filename=folder + "lola_{0}_robust_delta_eta_graph_e100.pdf".format(game))
+                                      filename=folder + "lola_{0}_robust_delta_eta_graph_d100.pdf".format(game))
 
 
 def lola_robust_to_random_policy_init(folder="../results/lola1_random_init_policy_robustness/"):
@@ -290,6 +290,50 @@ def lola_robust_to_random_policy_init(folder="../results/lola1_random_init_polic
             sorted_results[i] = get_ith_policies(results, ith)
 
 
+def metrics_through_time_graph(folder="../results/basic_lola_replication_200_epochs/"):
+    results = collect_experiment_results(folder, "*.json")
+
+    agent_pair_order = ["lola1_vs_lola1"]
+    game_order = ["IPD"]
+
+    for filename, X in results.items():
+        game = filename.split(folder)[1].split("/")[0]  # filename.split(folder)[1].split(".")[0][-3:] #
+        pair = filename.split(folder)[1].split("/")[1]  # filename.split(folder)[1].split(".")[0][:-4] #
+        print(game, pair)
+        if game in game_order and pair in agent_pair_order:
+            metrics = [(["R", "R (agent 1)"], lambda x1, x2: R(x1, x2, gamma=X["config"]["agent_pair"]["gamma"],
+                                              r1=X["config"]["game"]["payoff1"], r2=X["config"]["game"]["payoff2"]), 0, ["red", "orange"], True),
+                       (["%TFT"], lambda x1, x2: tft(x1, x2), 1, ["red"], True),
+                       (["%TFT2"], lambda x1, x2: tft2(x1, x2), 1, ["blue"], True),
+                       (["E[Y(CC)]"], lambda x1, x2: exp_s(x1, x2, state=1), 2, ["blue"], True),
+                       (["E[Y(CD)]"], lambda x1, x2: exp_s(x1, x2, state=2), 2, ["orange"], True),
+                       (["E[Y(DC)]"], lambda x1, x2: exp_s(x1, x2, state=3), 2, ["green"], True),
+                       (["E[Y(DD)]"], lambda x1, x2: exp_s(x1, x2, state=4), 2, ["red"], True)]
+            xlabels = ["Av. reward per step, R", "Av. % of TFT policy", "Expected state visits, E[Y(s)]"]
+            plot_metrics_timeline(X, metrics, filename= folder + "plot_R_TFT_ECC.pdf", n_metrics=3, show=False, xlabels=xlabels)
+
+
+def lola_single_value_policy_init_walk_through_space_figure(folder="../results/lola_single_value_policy_init/"):
+    results = collect_experiment_results(folder, "*.json")
+
+    # agent_pair_order = ["lola1_vs_lola1"]
+    # game_order = ["IPD"]
+
+    intervals = [[0, 1], [1, 49], [49, 499]]
+    init_values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    ordered_results = [None for _ in range(len(init_values))]
+    for filename, X in results.items():
+        v = filename.split(folder)[1].split("/")[0]  # filename.split(folder)[1].split(".")[0][-3:] #
+        print(v)
+        val_idx = int(v)
+        ordered_results[val_idx] = X
+
+    for v, value in enumerate(init_values):
+        plot_policy_walk_through_space(ordered_results[v], intervals, STATES["IPD"], prob_state=PROB_STATE_LABLES["IPD"], figsize=(8, 3),
+                                       filename_to_save=folder + "lola_v" + str(v) + "_space_walk_all.pdf", top=[None, None])
+        # break
+
 
 if __name__ == "__main__":
     # table_basic_experiments()
@@ -298,5 +342,7 @@ if __name__ == "__main__":
     # basic_experiment_replications_walk_through_space_figure()
     # plot_sigmoid()
     # lola_robust_delta_eta()
-    lola_robust_delta_eta_policies_grid()
+    # lola_robust_delta_eta_policies_grid()
     # lola_robust_delta_eta_R_conv_tft2_graph()
+    # metrics_through_time_graph()
+    lola_single_value_policy_init_walk_through_space_figure()

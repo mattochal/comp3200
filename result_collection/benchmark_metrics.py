@@ -54,29 +54,66 @@ def exp_s(p1, p2, n=100, state=0):
     return [total_PP[state], total_PP[state]]
 
 
-def conv_1p(p_epochs, x, comparison_p, max_dist):
+def prob_s(p1, p2, n=10, state=0):
+    P = np.vstack((np.zeros(5), (p1 * p2), (p1 * (1 - p2)), ((1 - p1) * p2), ((1 - p1) * (1 - p2)))).transpose()
+    PP = P[0, :]
+    for i in range(n):
+        PP = np.matmul(PP, P[:, :])
+    return [PP[state], PP[state]]
+
+
+def conv_1p(p_epochs, x, comparison_p, max_dist, n=5):
     above = np.where(np.ones(np.shape(p_epochs)) * max_dist - np.abs(p_epochs - comparison_p) > x, [1], [0])
-    for t, a in enumerate(np.mean(above, 1)):
-        if a == 1:
-            return t
+
+    ones = np.mean(above, 1)
+    length = ones.shape[0]
+    for t in range(length):
+        acc = 0
+        for l in range(n):
+            if l + t >= length:
+                return length
+            elif ones[t + l] == 1:
+                acc += 1
+        if acc == n:
+            return t + int(n/2)
     return len(above)
 
 
-def conv_2p(p1_epochs, p2_epochs, x, game):
-    comparison_p = []
-    max_diff = 0
-    if game == "IMP":
-        comparison_p = COMPARISONS["NASH_IMP"]
-        max_diff = MAX_DIFF["NASH_IMP"]
+def conv_2p(p1_epochs, p2_epochs, x, game, window=5):
+    all_metrics = []
+    N = np.shape(p1_epochs)[0]
+    t1 = t2 = N
 
-    elif game == "IPD":
-        comparison_p = COMPARISONS["TFT_IPD"]
-        max_diff = MAX_DIFF["TFT_IPD"]
+    for n in range(N):
+        p1 = p1_epochs[n]
+        p2 = p2_epochs[n]
 
-    conv1 = conv_1p(p1_epochs, x, comparison_p[0], max_diff)
-    conv2 = conv_1p(p2_epochs, x, comparison_p[1], max_diff)
+        if game == "IMP":
+            cs = nash2(p1, p2)
+        if game == "IPD":
+            cs = prob_s(p1, p2, state=1)
+            # cs = tft2(p1, p2)
 
-    return [conv1, conv2]
+        all_metrics.append(cs)
+
+    for n in range(int(window/2), N-int(window/2)):
+        acc1 = acc2 = 0
+        for l in range(-int(window/2), int(window/2)+1):
+            c1, c2 = all_metrics[l+n]
+            acc1 += c1
+            acc2 += c2
+        acc1 /= window
+        acc2 /= window
+
+        if n >= t1 and n >= t2:
+            return [t1, t2]
+        else:
+            if n < t1 and acc1 >= x:
+                t1 = n
+            if n < t2 and acc2 >= x:
+                t2 = n
+
+    return [t1, t2]
 
 
 # Average reward per time step
@@ -160,11 +197,11 @@ def get_av_metrics_for_epoch_policy_arrays(p1_array_epochs, p2_array_epochs,
                                     join_policies=False):
     epochs = p1_array_epochs.shape[1]
     results = []
-    for e in epochs:
+    for e in range(epochs):
         results_tuple = get_av_metrics_for_policy_arrays(p1_array_epochs[:, e], p2_array_epochs[:, e],
                                                         metric_fn, conf_interval, std, join_policies)
         results.append(results_tuple)
-    return results
+    return np.array(results)
 
 
 # Generic

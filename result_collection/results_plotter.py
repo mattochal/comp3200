@@ -194,13 +194,13 @@ def set_legend_ax(ax, ncols=2):
                      box.width, box.height * 0.9])
 
     # Put a legend below current axis
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.13), shadow=True, ncol=ncols)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), shadow=True, ncol=ncols)
 
 
 def plot_policies_and_v_timeline(ordered_results, states=["s0", "CC", "CD", "DC", "DD"], title="", filename_to_save="",
                                  prob_state="cooperation"):
     cols = len(ordered_results) + 1
-    fig, axes = plt.subplots(nrows=1, ncols=cols, figsize=(14, 5))
+    fig, axes = plt.subplots(nrows=1, ncols=cols, figsize=(11, 5))
     plt.subplots_adjust(left=0.05, right=0.97, top=0.87, bottom=0.08, wspace=0.22, hspace=0.27)
 
     colors = ["cyan", "blue", "orange", "green", "red"]
@@ -253,11 +253,11 @@ def plot_policies_and_v_timeline(ordered_results, states=["s0", "CC", "CD", "DC"
     pass
 
 
-def plot_policy_walk_through_space(results, intervals, states=["s0", "CC", "CD", "DC", "DD"],
-                                   title="", filename_to_save="", prob_state="cooperation", top=[None, None]):
+def plot_policy_walk_through_space(results, intervals, states=["s0", "CC", "CD", "DC", "DD"], show=True, figsize=(12, 4),
+                                   title="", filename_to_save="", prob_state="C", top=[None, None]):
     cols = len(intervals)
-    fig, axes = plt.subplots(nrows=1, ncols=cols, figsize=(14, 4), sharey=True, sharex=True)
-    plt.subplots_adjust(left=0.07, right=0.97, top=0.79, bottom=0.14, wspace=0.1, hspace=0.27)
+    fig, axes = plt.subplots(nrows=1, ncols=cols, figsize=figsize, sharey=True, sharex=True)
+    plt.subplots_adjust(left=0.09, right=0.97, top=0.79, bottom=0.16, wspace=0.1, hspace=0.27)
 
     colors = ["cyan", "blue", "orange", "green", "red"]
 
@@ -282,19 +282,24 @@ def plot_policy_walk_through_space(results, intervals, states=["s0", "CC", "CD",
         ax.set_title("[{0}:{1}]".format(start, depth))
         ax.set_xticks(np.linspace(0, 1, 6))
         ax.set_yticks(np.linspace(0, 1, 6))
+        m = 0.05
+        ax.set_xlim([0-m, 1+m])
+        ax.set_ylim([0-m, 1+m])
         # set_legend_ax(ax, ncols=5)
 
     handles, labels = ax.get_legend_handles_labels()
-    legend = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.51, 0.95), ncol=5, borderaxespad=0, fancybox=True)
+    legend = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.51, 0.97), ncol=5, borderaxespad=0, fancybox=True)
     frame = legend.get_frame()
     frame.set_edgecolor('black')
     frame.set_alpha(1)
     fig.text(0.5, 0.96, title, ha='center', fontsize=14)
-    fig.text(0.5, 0.02, 'P({0} | state) for agent 0 ({1})'.format(prob_state, pair[0]), ha='center', fontsize=12)
-    fig.text(0.02, 0.5, 'P({0} | state) for agent 1 ({1})'.format(prob_state, pair[1]), va='center', rotation='vertical', fontsize=12)
+    fig.text(0.5, 0.02, 'P({0}|s) for agent 0 ({1})'.format(prob_state, pair[0]), ha='center', fontsize=12)
+    fig.text(0.015, 0.5, 'P({0}|s) for agent 1 ({1})'.format(prob_state, pair[1]), va='center', rotation='vertical', fontsize=12)
 
-    plt.show()
-    # plt.savefig(filename_to_save)
+    # if show:
+    #     plt.show()
+    # else:
+    plt.savefig(filename_to_save)
     pass
 
 
@@ -386,7 +391,6 @@ def plot_v_timelines_for_delta_eta_combined_plot(ordered_results, states = ["s0"
 
         ax.plot(etas_x, Y1[:, 0], pair_colours[r], alpha=0.5, label="{0}".format(titles[r]))
         # ax.fill_between(etas_x, Y1[:, 0] + Y1[:, 1], Y1[:, 0] - Y1[:, 1], color=pair_colours[0], alpha=0.1)
-
         # ax.plot(etas_x, Y2[:, 0], pair_colours[1], alpha=0.5, label="a{0} {1}".format(1, pair[1]))
         # ax.fill_between(etas_x, Y2[:, 0] + Y2[:, 1], Y2[:, 0] - Y2[:, 1], color=pair_colours[1], alpha=0.1)
 
@@ -581,6 +585,50 @@ def plot_delta_eta_row_col_benchmarks(ordered_results, title="", titles=[], file
     else:
         plt.savefig(filename)
     pass
+
+
+def plot_metrics_timeline(single_results, metrics=[], xlabels=[], filename="", show=True, figsize=(6, 8), n_metrics = None):
+
+    fig, axes = plt.subplots(nrows=n_metrics, ncols=1, figsize=figsize)
+
+    # Two agents
+    for r, metric in enumerate(metrics):
+        epoch_policies = np.array(get_epoch_policies(single_results))
+        av_conf_results = get_av_metrics_for_epoch_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1],
+                                                                  join_policies=metric[4],
+                                                                  conf_interval=0.95,
+                                                                  metric_fn=metric[1])
+
+        if not metric[4]:
+            ax = axes[metric[2]]
+            for l, label in enumerate(metric[0]):
+                value_fn = av_conf_results[:, 0+l]
+                conf = av_conf_results[:, 2+l]
+                x = np.arange(np.shape(value_fn)[0])
+                ax.plot(x, value_fn, c=metric[3][l], alpha=0.5, label=label)
+                ax.fill_between(x, value_fn- conf, value_fn + conf, color=metric[3][l], alpha=0.2)
+        else:
+            value_fn = av_conf_results[:, 0]
+            conf = av_conf_results[:, 1]
+            x = np.arange(np.shape(value_fn)[0])
+
+            ax = axes[metric[2]]
+            ax.plot(x, value_fn, c=metric[3][0], alpha=0.5, label=metric[0][0])
+            ax.fill_between(x, value_fn - conf, value_fn + conf, color=metric[3][0], alpha=0.2)
+
+    for a, ax in enumerate(axes):
+        ax.set_ylabel(xlabels[a])
+        set_legend_ax(ax, 4)
+        ax.set_xlabel('Iterations')
+
+    plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.08, wspace=0.18, hspace=0.38)
+    # show = True
+    if show:
+        plt.show()
+    else:
+        plt.savefig(filename)
+    pass
+
 
 if __name__ == "__main__":
     # plot_single_sim_run("results/lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")
