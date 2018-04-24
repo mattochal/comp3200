@@ -20,28 +20,28 @@ def tft(p1, p2):
     comparison_p = np.array(COMPARISONS["TFT_IPD"]).transpose()
     ps = np.array([p1, p2]).transpose()
     comparison1 = comparison2 = np.mean(np.max(np.abs(ps - comparison_p), 1) < 0.5)
-    return [comparison1, comparison2]
+    return [comparison1*100, comparison2*100]
 
 
 def tft2(p1, p2):
     comparison_p = np.array(COMPARISONS["TFT_IPD"])
     comparison1 = np.mean(np.ones((5)) - np.abs(p1 - comparison_p[0]))
-    comparison2 = np.mean(np.ones((5)) - np.abs(p2 - comparison_p[0]))
-    return [comparison1, comparison2]
+    comparison2 = np.mean(np.ones((5)) - np.abs(p2 - comparison_p[1]))
+    return [comparison1*100, comparison2*100]
 
 
 def nash(p1, p2):
     comparison_p = np.array(COMPARISONS["NASH_IMP"]).transpose()
     ps = np.array([p1, p2]).transpose()
     comparison1 = comparison2 = np.mean(np.max(np.abs(ps - comparison_p), 1) < 0.25)
-    return [comparison1, comparison2]
+    return [comparison1*100, comparison2*100]
 
 
 def nash2(p1, p2):
     comparison_p = np.array(COMPARISONS["NASH_IMP"])
     comparison1 = np.mean(np.ones(5) * 0.5 - np.abs(p1 - comparison_p[0]))
-    comparison2 = np.mean(np.ones(5) * 0.5 - np.abs(p2 - comparison_p[0]))
-    return [comparison1, comparison2]
+    comparison2 = np.mean(np.ones(5) * 0.5 - np.abs(p2 - comparison_p[1]))
+    return [comparison1*100, comparison2*100]
 
 
 def exp_s(p1, p2, n=100, state=0):
@@ -51,6 +51,8 @@ def exp_s(p1, p2, n=100, state=0):
     for i in range(n):
         PP = np.matmul(PP, P[:, :])
         total_PP += PP
+    if state == 5:
+        return [total_PP[2] + total_PP[3]] * 2
     return [total_PP[state], total_PP[state]]
 
 
@@ -91,8 +93,8 @@ def conv_2p(p1_epochs, p2_epochs, x, game, window=5):
         if game == "IMP":
             cs = nash2(p1, p2)
         if game == "IPD":
-            cs = prob_s(p1, p2, state=1)
-            # cs = tft2(p1, p2)
+            # cs = prob_s(p1, p2, state=1)
+            cs = tft2(p1, p2)
 
         all_metrics.append(cs)
 

@@ -587,7 +587,228 @@ def plot_delta_eta_row_col_benchmarks(ordered_results, title="", titles=[], file
     pass
 
 
-def plot_metrics_timeline(single_results, metrics=[], xlabels=[], filename="", show=True, figsize=(6, 8), n_metrics = None):
+def plot_metrics_graph_randomness(ordered_results, title="", titles=[], filename="", show=True, figsize=(8, 3)):
+    n_metrix = 4
+
+    fig, axes = plt.subplots(nrows=n_metrix, ncols=1, figsize=figsize, sharex=True)
+    plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.08, wspace=0.22, hspace=0.27)
+
+    ax = axes[0]
+    x = []
+
+    # Average reward
+    for c, results in enumerate(ordered_results):
+        gamma = results["config"]["agent_pair"]["gamma"]
+        p1 = results["config"]["game"]["payoff1"]
+        p2 = results["config"]["game"]["payoff2"]
+
+        end_policies = np.array(get_end_policies(results))
+        (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+                                                         conf_interval=0.95,
+                                                         metric_fn=lambda x1, x2: R(x1, x2, gamma=gamma, r1=p1, r2=p2))
+
+        ax.errorbar(x[c], R1, yerr=conf_R1, fmt='o', c="darkgreen", ecolor="green", capthick=15, alpha=0.75)
+
+    # ax.set_xlabel(r'$\{0}$'.format(delta_or_eta))
+    ax.set_xlabel('Randomness, r, in initial policy probability drawn from a uniform distribution of [0.5-r, 0.5+r]')
+    ax.set_title(r'Effect of r on the average reward per step, R')
+    ax.set_ylabel('Av. reward per step, R')
+    ax.set_yticks(np.linspace(-2, -1, 5))
+    ax.grid(True)
+
+    ax = axes[1]
+    # Convergence
+    for c, results in enumerate(ordered_results):
+        # d_or_e = results["config"]["agent_pair"][delta_or_eta]
+        gamma = results["config"]["agent_pair"]["gamma"]
+        p1 = results["config"]["game"]["payoff1"]
+        p2 = results["config"]["game"]["payoff2"]
+
+        x.append(x[c])
+
+        epoch_policies = np.array(get_epoch_policies(results))
+        (conv1, conf_conv1) = get_av_metrics_for_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1],
+                                                               join_policies=True,
+                                                               conf_interval=0.95,
+                                                               metric_fn=lambda x1, x2: conv_2p(x1, x2, x=0.90,
+                                                                                                game="IPD"))
+
+        ax.errorbar(x[c], conv1, yerr=conf_conv1, fmt='s', c="darkgreen", ecolor="green", capthick=15, alpha=0.75,
+                    label="Conv(90%)")
+
+        (conv1, conf_conv1) = get_av_metrics_for_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1],
+                                                               join_policies=True,
+                                                               conf_interval=0.95,
+                                                               metric_fn=lambda x1, x2: conv_2p(x1, x2, x=0.95,
+                                                                                                game="IPD"))
+
+        ax.errorbar(x[c], conv1, yerr=conf_conv1, fmt='o', c="darkblue", ecolor="blue", capthick=15, alpha=0.75,
+                    label="Conv(95%)")
+
+        (conv1, conf_conv1) = get_av_metrics_for_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1],
+                                                               join_policies=True,
+                                                               conf_interval=0.95,
+                                                               metric_fn=lambda x1, x2: conv_2p(x1, x2, x=0.99,
+                                                                                                game="IPD"))
+
+        ax.errorbar(x[c], conv1, yerr=conf_conv1, fmt='x', c="darkred", ecolor="red", capthick=15, alpha=0.75,
+                    label="Conv(99%)")
+
+        # set_legend_ax(ax, 3)
+
+    handles, labels = ax.get_legend_handles_labels()
+    legend = ax.legend(handles[:3], labels[:3], loc='lower left', ncol=1, borderaxespad=0, fancybox=True)
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+    frame.set_alpha(1)
+
+    ax.set_xlabel('Randomness, r, in initial policy probability drawn from a uniform distribution of [0.5-r, 0.5+r]')
+    ax.set_title(r'Effect of r on convergence, Conv(x), to x% of TFT strategy.')
+    ax.set_ylabel('Average convergence time')
+    ax.grid(True)
+    ax.set_yticks(np.linspace(0, 300, 4))
+
+    ax = axes[2]
+    x = []
+
+    # Average reward
+    for c, results in enumerate(ordered_results):
+        # d_or_e = results["config"]["agent_pair"][delta_or_eta]
+        gamma = results["config"]["agent_pair"]["gamma"]
+        p1 = results["config"]["game"]["payoff1"]
+        p2 = results["config"]["game"]["payoff2"]
+
+        x.append(x[c])
+
+        end_policies = np.array(get_end_policies(results))
+        (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+                                                         conf_interval=0.95,
+                                                         metric_fn=lambda x1, x2: tft2(x1, x2))
+
+        ax.errorbar(x[c], R1, yerr=conf_R1, fmt='o', c="darkgreen", ecolor="green", capthick=15, alpha=0.75)
+
+    ax.set_xlabel('Randomness, r, in initial policy probability drawn from a uniform distribution of [0.5-r, 0.5+r]')
+    ax.set_title(r'Effect of r on %TFT2')
+    ax.set_ylabel('Average %TFT2')
+    ax.grid(True)
+    ax.set_yticks(np.linspace(0, 1, 6))
+
+    ax = axes[3]
+    x = []
+
+    # Average reward
+    for c, results in enumerate(ordered_results):
+        # d_or_e = results["config"]["agent_pair"][delta_or_eta]
+        gamma = results["config"]["agent_pair"]["gamma"]
+        p1 = results["config"]["game"]["payoff1"]
+        p2 = results["config"]["game"]["payoff2"]
+
+        x.append(x[c])
+
+        end_policies = np.array(get_end_policies(results))
+        (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+                                                         conf_interval=0.95,
+                                                         metric_fn=lambda x1, x2: exp_s(x1, x2, state=1))
+
+        ax.errorbar(x[c], R1, yerr=conf_R1, fmt='o', c="darkblue", ecolor="blue", capthick=15, alpha=0.55, label="CC")
+
+        end_policies = np.array(get_end_policies(results))
+        (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+                                                         conf_interval=0.95,
+                                                         metric_fn=lambda x1, x2: exp_s(x1, x2, state=2))
+
+        ax.errorbar(x[c], R1, yerr=conf_R1, fmt='s', c="orange", ecolor="gold", capthick=15, alpha=0.75, label="CD")
+
+        end_policies = np.array(get_end_policies(results))
+        (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+                                                         conf_interval=0.95,
+                                                         metric_fn=lambda x1, x2: exp_s(x1, x2, state=3))
+
+        ax.errorbar(x[c], R1, yerr=conf_R1, fmt='x', c="darkgreen", ecolor="green", capthick=15, alpha=0.55,
+                    label="DC")
+
+        end_policies = np.array(get_end_policies(results))
+        (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+                                                         conf_interval=0.95,
+                                                         metric_fn=lambda x1, x2: exp_s(x1, x2, state=4))
+
+        ax.errorbar(x[c], R1, yerr=conf_R1, fmt='^', c="darkred", ecolor="red", capthick=15, alpha=0.55, label="DD")
+
+    handles, labels = ax.get_legend_handles_labels()
+    legend = ax.legend(handles[:4], labels[:4], loc='best', ncol=1, borderaxespad=0, fancybox=True)
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+    frame.set_alpha(1)
+
+    ax.set_xlabel('Randomness, r, in initial policy probability drawn from a uniform distribution of [0.5-r, 0.5+r]')
+    # ax.set_title(r'Effect of $\{0}$ on expected number of visits to state s'.format(delta_or_eta))
+    ax.set_ylabel('Expected visits to state s')
+    ax.grid(True)
+    ax.set_yticks(np.linspace(0, 100, 6))
+
+    if show:
+        plt.show()
+    else:
+        plt.savefig(filename)
+    pass
+
+    ax = axes[0]
+    x = np.linspace(0, 0.5, len(ordered_results))[:-1]
+    # Average reward
+    for c, x_pt in enumerate(x):
+        results = ordered_results[c]
+        gamma = results["config"]["agent_pair"]["gamma"]
+        p1 = results["config"]["game"]["payoff1"]
+        p2 = results["config"]["game"]["payoff2"]
+
+        end_policies = np.array(get_end_policies(results))
+        (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+                                                         conf_interval=0.95,
+                                                         metric_fn=lambda x1, x2: R(x1, x2, gamma=gamma, r1=p1, r2=p2))
+
+        ax.errorbar(x_pt, R1, yerr=conf_R1, fmt='o', c="darkgreen", ecolor="green", capthick=15, alpha=0.75)
+
+    ax.set_xlabel('Randomness, r, in initial policy probability drawn from a uniform distribution of [0.5-r, 0.5+r]')
+    ax.set_title(r'Effect of noise in the initial policy on av. reward per step')
+    ax.set_ylabel('Av. reward per step, R')
+
+    ax = axes[1]
+    x = []
+
+    # Average tft
+    for c, x_pt in enumerate(x):
+        results = ordered_results[c]
+        gamma = results["config"]["agent_pair"]["gamma"]
+        p1 = results["config"]["game"]["payoff1"]
+        p2 = results["config"]["game"]["payoff2"]
+
+        end_policies = np.array(get_end_policies(results))
+        (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+                                                         conf_interval=0.95,
+                                                         metric_fn=lambda x1, x2: tft2(x1, x2))
+
+        ax.errorbar(x_pt, R1, yerr=conf_R1, fmt='o', c="darkgreen", ecolor="green", capthick=15, alpha=0.75)
+
+    # ax.set_xlabel(r'$\{0}$'.format(delta_or_eta))
+    ax.set_ylabel('Average %TFT')
+
+    handles, labels = ax.get_legend_handles_labels()
+    legend = ax.legend(handles[:4], labels[:4], loc='best', ncol=1, borderaxespad=0, fancybox=True)
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+    frame.set_alpha(1)
+
+    # ax.grid(True)
+    # ax.set_yticks(np.linspace(0, 100, 6))
+
+    if show:
+        plt.show()
+    else:
+        plt.savefig(filename)
+    pass
+
+
+def plot_metrics_timeline(single_results, metrics=[], ylabels=[], xlabels=[], ybounds=[], filename="", yticks=[], show=True, figsize=(6, 8), n_metrics = None):
 
     fig, axes = plt.subplots(nrows=n_metrics, ncols=1, figsize=figsize)
 
@@ -617,9 +838,11 @@ def plot_metrics_timeline(single_results, metrics=[], xlabels=[], filename="", s
             ax.fill_between(x, value_fn - conf, value_fn + conf, color=metric[3][0], alpha=0.2)
 
     for a, ax in enumerate(axes):
-        ax.set_ylabel(xlabels[a])
+        ax.set_ylabel(ylabels[a])
         set_legend_ax(ax, 4)
         ax.set_xlabel('Iterations')
+        ax.set_yticks(yticks[a])
+        ax.set_ylim(ybounds[a])
 
     plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.08, wspace=0.18, hspace=0.38)
     # show = True
@@ -629,6 +852,53 @@ def plot_metrics_timeline(single_results, metrics=[], xlabels=[], filename="", s
         plt.savefig(filename)
     pass
 
+
+def plot_metrics_across_x(single_results, metrics=[], ylabels=[], xlabels=[], xticks= [], yticks=[], ybounds = [], filename="", show=True, figsize=(8, 10), n_metrics = None):
+
+    fig, axes = plt.subplots(nrows=n_metrics, ncols=1, figsize=figsize)
+
+    # Two agents
+    for r, metric in enumerate(metrics):
+        epoch_policies = single_results
+        av_conf_results = get_av_metrics_for_epoch_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1],
+                                                                  join_policies=metric[4],
+                                                                  conf_interval=0.95,
+                                                                  metric_fn=metric[1])
+
+        if not metric[4]:
+            ax = axes[metric[2]]
+            for l, label in enumerate(metric[0]):
+                value_fn = av_conf_results[:, 0+l]
+                conf = av_conf_results[:, 2+l]
+                # x = np.arange(np.shape(value_fn)[0])
+                ax.plot(xticks, value_fn, c=metric[3][l], alpha=0.5, label=label)
+                ax.fill_between(xticks, value_fn- conf, value_fn + conf, color=metric[3][l], alpha=0.2)
+        else:
+            value_fn = av_conf_results[:, 0]
+            conf = av_conf_results[:, 1]
+            # x = np.arange(np.shape(value_fn)[0])
+
+            ax = axes[metric[2]]
+            ax.plot(xticks, value_fn, c=metric[3][0], alpha=0.5, label=metric[0][0])
+            ax.fill_between(xticks, value_fn - conf, value_fn + conf, color=metric[3][0], alpha=0.2)
+
+    reduced_xticks = np.linspace(0,0.5, int(len(xticks)/5)+1)
+    for a, ax in enumerate(axes):
+        ax.set_ylabel(ylabels[a])
+        set_legend_ax(ax, 4)
+        ax.set_xlabel(xlabels[a])
+        ax.set_xticks(xticks, minor=True)
+        ax.set_xticks(reduced_xticks)
+        ax.set_yticks(yticks[a])
+        ax.set_ylim(ybounds[a])
+
+    plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.08, wspace=0.18, hspace=0.38)
+    # show = True
+    if show:
+        plt.show()
+    else:
+        plt.savefig(filename)
+    pass
 
 if __name__ == "__main__":
     # plot_single_sim_run("results/lolaom_ST_space/S01xT08/result_lolaom_vs_lolaom_IPD.json")

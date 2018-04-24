@@ -1,3 +1,6 @@
+from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.patches as mpatches
+
 from result_collection.collect_batch_results import *
 from result_collection.helper_func import collect_experiment_results
 from result_collection.results_plotter import *
@@ -180,6 +183,75 @@ def plot_sigmoid():
     plt.savefig("sigmoid.pdf")
 
 
+def plot_st_space():
+    pts = int(101*1.1)
+    r = 1
+    p = 0
+    S = np.linspace(-1-0.1, 1+0.1, pts)
+    T = np.linspace(0-0.1, 2+0.1, pts)
+
+    def st():
+        lbls = ["Harmony", "Prisoner's Dilemma", "Stag Hunt", "Snow Drift"]
+        z = np.zeros((pts, pts))
+        for i, s in enumerate(S):
+            for j, t in enumerate(T):
+                if t > r > p > s:
+                    z[i][j] = 1
+                if r > t >= p > s:
+                    z[i][j] = 2
+                if t > r and s >= p:
+                    z[i][j] = 3
+        return lbls, z
+
+    def normalise(rewards):
+        P = rewards[3]
+        rewards = rewards - P
+        R = rewards[0]
+        return (rewards / R)[1:3]
+
+    fig, ax = plt.subplots(figsize=(6, 3))
+
+    n_bin = 4
+    cmap_name = 'my_list'
+    cols = ["gray", "red", "green", "blue"]
+    alpha = 0.55
+    cm = LinearSegmentedColormap.from_list(cmap_name, cols, N=n_bin)
+
+    lables, z = st()
+    ax.imshow(z, interpolation='nearest', origin='lower', cmap=cm, alpha=alpha, label=lables,
+                  extent=[min(T) - 0.5 / pts, max(T) + 0.5 / pts, min(S) - 0.5 / pts, max(S) + 0.5 / pts], vmax=n_bin, vmin=-1)
+
+    PD = normalise(np.array([-1, -3, 0, -2]))
+    SH = normalise(np.array([2, 0, 1, 1]))
+    SD = normalise(np.array([-1, -2, 0, -3]))
+    ax.scatter(PD[1], PD[0], c=cols[1], s=20)
+    ax.scatter(SH[1], SH[0], c=cols[2], s=20)
+    ax.scatter(SD[1], SD[0], c=cols[3], s=20)
+
+    patches = []
+    for c, lbl in enumerate(lables):
+        patch = mpatches.Patch(color=cols[c], label=lbl, alpha=alpha)
+        patches.append(patch)
+
+    ax.legend(handles=patches, bbox_to_anchor=(2.05, 0.75), shadow=True, ncol=1)
+    # box = ax.get_position()
+    # ax.set_position([box.x0, box.y0 + box.height * 0.1,
+    #                  box.width, box.height * 0.9])
+
+    ax.set_xlabel('T')
+    ax.set_ylabel('S')
+
+    ax.set_xticks(np.linspace(0, 2, 5))
+    ax.set_xlim((0-0.1, 2+0.1))
+
+    ax.set_yticks(np.linspace(-1, 1, 5))
+    ax.set_ylim((-1-0.1, 1+0.1))
+    # plt.grid(True)
+    plt.subplots_adjust(left=0.1, right=0.67, top=0.88, bottom=0.23, wspace=0.1, hspace=0.27)
+    plt.savefig("st-space.pdf")
+    # plt.show()
+
+
 def lola_robust_delta_eta(folder="../results/lola_robust_delta_eta/"):
     game_order = ["IPD"]
     game = game_order[0]
@@ -309,8 +381,11 @@ def metrics_through_time_graph(folder="../results/basic_lola_replication_200_epo
                        (["E[Y(CD)]"], lambda x1, x2: exp_s(x1, x2, state=2), 2, ["orange"], True),
                        (["E[Y(DC)]"], lambda x1, x2: exp_s(x1, x2, state=3), 2, ["green"], True),
                        (["E[Y(DD)]"], lambda x1, x2: exp_s(x1, x2, state=4), 2, ["red"], True)]
-            xlabels = ["Av. reward per step, R", "Av. % of TFT policy", "Expected state visits, E[Y(s)]"]
-            plot_metrics_timeline(X, metrics, filename= folder + "plot_R_TFT_ECC.pdf", n_metrics=3, show=False, xlabels=xlabels)
+            ylabels = ["Av. reward per step, R", "Av. % of TFT policy", "Expected state visits, E[Y(s)]"]
+            yticks = [np.linspace(-2, -1, 6), np.linspace(0, 100, 6), np.linspace(0, 100, 6)]
+            ybounds = [(-2 - 0.05, -1 + 0.05), (0 - 5, 100 + 5), (0 - 5, 100 + 5)]
+            plot_metrics_timeline(X, metrics, filename= folder + "plot_R_TFT_ECC.pdf", n_metrics=3, show=False,
+                                  ylabels=ylabels, yticks=yticks, ybounds=ybounds)
 
 
 def lola_single_value_policy_init_walk_through_space_figure(folder="../results/lola_single_value_policy_init/"):
@@ -335,6 +410,137 @@ def lola_single_value_policy_init_walk_through_space_figure(folder="../results/l
         # break
 
 
+def lola_randomness_robustness_metrics(folder="../results/lola_uniform_random_init_policy/"):
+    agent_pair_order = ["lola1_vs_lola1"]
+    game = "IPD"
+
+    randomness = np.linspace(0, 0.5, 51)
+    ordered_results = [None] * len(randomness)
+
+    file = folder + "compressed_after_50_for_100.npy"
+
+    results = collect_experiment_results(folder, "*{0}.json".format(game), top=1)
+    my_X = list(results.values())[0]
+
+    if not os.path.exists(file):
+        results = collect_experiment_ith_policies(folder, 50, "*{0}.json".format(game))
+
+        for filename, X in results.items():
+            r = int(filename.split(folder)[1].split("/")[0][1:])
+            ordered_results[r] = X
+
+        ordered_results = np.array(ordered_results)
+        np.save(file, ordered_results)
+    else:
+        ordered_results = np.load(file)
+
+    metrics = [(["R", "R (agent 1)"], lambda x1, x2: R(x1, x2, gamma=my_X["config"]["agent_pair"]["gamma"],
+                                                       r1=my_X["config"]["game"]["payoff1"],
+                                                       r2=my_X["config"]["game"]["payoff2"]), 0, ["red", "orange"], True),
+               (["%TFT"], lambda x1, x2: tft(x1, x2), 1, ["red"], True),
+               (["%TFT2"], lambda x1, x2: tft2(x1, x2), 1, ["blue"], True),
+               (["E[Y(CC)]"], lambda x1, x2: exp_s(x1, x2, state=1), 2, ["blue"], True),
+               (["E[Y(CD)]"], lambda x1, x2: exp_s(x1, x2, state=2), 2, ["orange"], True),
+               (["E[Y(DC)]"], lambda x1, x2: exp_s(x1, x2, state=3), 2, ["green"], True),
+               (["E[Y(DD)]"], lambda x1, x2: exp_s(x1, x2, state=4), 2, ["red"], True)]
+    ylabels = ["Av. reward per step, R", "Av. % of TFT policy", "Expected state visits, E[Y(s)]"]
+
+    my_results = []
+    for rr in range(ordered_results.shape[1]):
+        my_results.append(ordered_results[:, rr])
+
+    yticks = [np.linspace(-1.5, -1, 6), np.linspace(50, 100, 6), np.linspace(0, 100, 6)]
+    ybounds = [(-1.5-0.05*0.5, -1+0.05*0.5), (50-0.05*50, 100+0.05*50), (0-5, 100+5)]
+
+    plot_metrics_across_x(np.array(my_results), metrics, filename=folder + "randomness_r_on_R_TFT_EY_after_50_for_100.pdf",
+                          n_metrics=3, show=False, ylabels=ylabels, xticks=randomness, yticks=yticks, ybounds=ybounds,
+                          xlabels=["Randomness, r, in initial policy probability drawn from a uniform distribution of [0.5-r, 0.5+r]"]*3)
+
+
+def generate_metric_table(results_array, metric, y_lbls, x_lbls):
+
+    # Get R(std) results table
+    # r_table = np.zeros((len(y_lbls), len(x_lbls), 2))
+
+    line = ""
+    for _, x in enumerate(x_lbls):
+        line += " & {0:.2f}".format(x)
+    print(line, end=r"\\ \hline" + "\n")
+    line = ""
+    for i, y in reversed(list(enumerate(y_lbls))):
+        for j, x in enumerate(x_lbls):
+            if j == 0:
+                line = "{0:.2f} & ".format(y)
+            else:
+                line += " & "
+            end_policies = results_array[i][j]
+            (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+                                                             # conf_interval=0.95,
+                                                             std=True,
+                                                             metric_fn=metric["function"])
+
+            S = y
+            T = x
+            if S < 0 and T > 1:
+                # Prisoners Dilemma
+                line += "\cellcolor[HTML]{FFDFDE}"
+            elif S < 0 and T <= 1:
+                # Stag hunt
+                line += "\cellcolor[HTML]{CCEACC}"
+            elif S >= 0 and T > 1:
+                # Snowdrift
+                if S + T < 2:
+                    line += "\cellcolor[HTML]{A9D5FF}"
+                else:
+                    line += "\cellcolor[HTML]{CBE6FF}"
+            else:
+                # Harmony Game
+                if S + T < 2:
+                    line += "\cellcolor[HTML]{D2D2D2}"
+                else:
+                    line += "\cellcolor[HTML]{E7E7E7}"
+
+            line += "{0:.2f}".format(R1) +"({0:.2f})".format(conf_R1)
+
+        print(line, end=r"\\ \hline" + "\n")
+        line = ""
+
+
+def plot_lola_through_st_space(folder="../results/lola_through_ST_space/"):
+    agent_pair = "lola1_vs_lola1"  # "lola1b_vs_lola1", "lola1b_vs_lola1b"
+    game = "unspecified"
+
+    S = np.linspace(-1.0, 1.0, num=9)
+    T = np.linspace(0.0, 2.0, num=9)
+
+    ordered_results = [[None] * len(T) for _ in S]
+    file = folder + "compressed_{0}.npy".format(agent_pair)
+    pattern = "*{0}_{1}.json".format(agent_pair, game)
+    results = collect_experiment_results(folder, pattern, top=1)
+    my_X = list(results.values())[0]
+
+    if not os.path.exists(file):
+        results = collect_experiment_end_policies(folder, pattern)
+
+        for filename, X in results.items():
+            s = int(filename.split(folder)[1].split("/")[0][1:])
+            t = int(filename.split(folder)[1].split("/")[1][1:])
+            ordered_results[s][t] = X
+
+        ordered_results = np.array(ordered_results)
+        np.save(file, ordered_results)
+    else:
+        ordered_results = np.load(file)
+
+    metric = {"title": "R (std)",
+              "function": lambda x1, x2: R(x1, x2, gamma=my_X["config"]["agent_pair"]["gamma"],
+                                                       r1=my_X["config"]["game"]["payoff1"],
+                                                       r2=my_X["config"]["game"]["payoff2"])}
+              # "function": lambda x1, x2: exp_s(x1, x2, state=5)}
+
+    generate_metric_table(ordered_results, metric, S, T)
+
+
 if __name__ == "__main__":
     # table_basic_experiments()
     # basic_experiment_replications_table()
@@ -345,4 +551,7 @@ if __name__ == "__main__":
     # lola_robust_delta_eta_policies_grid()
     # lola_robust_delta_eta_R_conv_tft2_graph()
     # metrics_through_time_graph()
-    lola_single_value_policy_init_walk_through_space_figure()
+    # lola_single_value_policy_init_walk_through_space_figure()
+    # plot_st_space()
+    # lola_randomness_robustness_metrics()
+    plot_lola_through_st_space()

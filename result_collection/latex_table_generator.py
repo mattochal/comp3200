@@ -83,13 +83,15 @@ def pprint_dict_list(dict_list, order=[[]]):
 
     return my_string
 
-def print_experimental_setup():
-    folder = "../results/basic_lola_replication_50_epochs/"
-    results = collect_experiment_results(folder, "*.json")
+
+def print_experimental_setup(folder="../results/lola_through_ST_space/"):
+    agent_pair = "lola1_vs_lola1"  # "lola1b_vs_lola1", "lola1b_vs_lola1b"
+    game = "unspecified"
+    results = collect_experiment_configs(folder, "*{0}_{1}.json".format(agent_pair, game))
 
     flat_configs = []
     for filename, X in results.items():
-        config = X["config"]
+        config = X
         flat_config = {}
         for k, v in config.items():
             for k2, v2 in v.items():
@@ -285,10 +287,57 @@ def table_delta_eta_results(folder="../results/lola_robust_delta_eta/"):
 """
 
 
+def table_st_space_R(folder="../results/lola_uniform_random_init_policy/"):
+    agent_pair_order = ["lola1_vs_lola1"]
+    game = "IPD"
+
+    randomness = np.linspace(0, 0.5, 51)
+    ordered_results = [None] * len(randomness)
+
+    file = folder + "compressed.npy"
+
+    results = collect_experiment_results(folder, "*{0}.json".format(game), top=1)
+    my_X = list(results.values())[0]
+
+    if not os.path.exists(file):
+        results = collect_experiment_ith_policies(folder, 500-1, "*{0}.json".format(game))
+
+        for filename, X in results.items():
+            r = int(filename.split(folder)[1].split("/")[0][1:])
+            ordered_results[r] = X
+
+        ordered_results = np.array(ordered_results)
+        np.save(file, ordered_results)
+    else:
+        ordered_results = np.load(file)
+
+    ETA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0, 5.0]
+    DELTA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0, 5.0][:1]
+
+    ordered_results = [[None] * len(DELTA) for _ in range(len(ETA))]
+    # titles = [None] * len(DELTA)
+    for filename, X in results.items():
+        delta = X["config"]["agent_pair"]["delta"]
+        eta = X["config"]["agent_pair"]["eta"]
+        gamma = X["config"]["agent_pair"]["gamma"]
+        r1 = X["config"]["game"]["payoff1"]
+        r2 = X["config"]["game"]["payoff2"]
+        delta_eta = filename.split(folder)[1].split("/")  # filename.split(folder)[1].split(".")[0][:-4] #
+        if delta in DELTA and eta in ETA:
+            e_idx = int(delta_eta[1][1:])
+            d_idx = int(delta_eta[0][1:])
+            epoch_policies = get_epoch_policies(X)
+            ordered_results[e_idx][d_idx] = get_av_metrics_over_repeates_for_table(epoch_policies, gamma, r1, r2, game)
+
+    print(TABLE_METRIC_ORDER)
+    arr = np.array(ordered_results)
+    print(np.shape(arr))
+    a = np.reshape(arr, (arr.shape[0], -1))
+    print(np.shape(a))
+    np.savetxt("foo.csv", a, delimiter="\t")
+
+
 if __name__ == "__main__":
     # table_basic_experiments()
-    # print_experimental_setup()
-    table_delta_eta_results()
-    # a = np.asarray(np.reshape(np.arange(5*4*3), (5,4,3)))
-    # a = np.reshape(a, (a.shape[0], -1))
-    # np.savetxt("foo.csv", a, delimiter="\t")
+    print_experimental_setup()
+    # table_delta_eta_results()

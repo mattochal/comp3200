@@ -585,14 +585,14 @@ def lola_through_ST_space(folder="lola_through_ST_space/"):
         repeats = 3
         epoch_length = 2
     else:
-        repeats = 50
-        epoch_length = 1000
+        repeats = 250
+        epoch_length = 100
 
     num_rollout = 0
     rollout_length = 0
     beta = 0
 
-    agent_pairs = ["lola1_vs_lola1", "lola1b_vs_lola1", "lola1b_vs_lola1b"]
+    agent_pairs = ["lola1_vs_lola1"]  # , "lola1b_vs_lola1", "lola1b_vs_lola1b"]
     sigma = 1  # for normal dist
     gamma = 0.96
     eta = 1
@@ -602,7 +602,7 @@ def lola_through_ST_space(folder="lola_through_ST_space/"):
     S = np.linspace(-1.0, 1.0, num=9)
     T = np.linspace(0.0, 2.0, num=9)
 
-    wall_time_offset = 60 * 60
+    wall_time_offset = 60 * 60 * 0.5
     game = "unspecified"
 
     for i, agent_pair in enumerate(agent_pairs):
@@ -654,8 +654,8 @@ def lola_randomness_robustness(folder="lola_uniform_random_init_policy/"):
     gamma = gammas[game]
 
     if TEST:
-        repeats = 1
-        epoch_length = 5
+        repeats = 3
+        epoch_length = 4
         num_rollout = 0
         rollout_length = 0
     else:
@@ -691,8 +691,8 @@ def lola_randomness_robustness(folder="lola_uniform_random_init_policy/"):
         invoke_dilemma_qsubs(game, sub_folder, flags, params, agent_pair=agent_pair, walltime=wall_time)
 
 
-# TEST = True
-TEST = False
+TEST = True
+# TEST = False
 
 # AGENT_PAIR = "lolaom_vs_lolaom"
 # FOLDER_PREFIX = "results/lolaom_"
@@ -722,7 +722,7 @@ if __name__ == "__main__":
     # basic_experiments()
     # basic_lola_replication()
     # lola_robust_delta_eta()
-    # lola_through_ST_space()
+    lola_through_ST_space()
     # lola_single_value_policy_init()
-    lola_randomness_robustness()
+    # lola_randomness_robustness()
     pass

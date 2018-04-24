@@ -115,6 +115,18 @@ def collect_experiment_results(folder, pattern='*.json', top=None):
 
 # Given a directory to a folder containing multiple result files stored in json format
 # return a dictionary keyed with file paths and the loaded policy
+def collect_experiment_configs(folder, pattern='*.json', top=None):
+    results = dict()
+    filenames = []
+    for filename in find_files(folder, pattern):
+        filenames.append(filename)
+
+    for filename in sorted(filenames)[:top]: # + sorted(filenames)[10:top+10]:
+        results[filename] = load_results(filename)["config"]
+    return results
+
+# Given a directory to a folder containing multiple result files stored in json format
+# return a dictionary keyed with file paths and the loaded policy
 def collect_experiment_end_policies(folder, pattern='*.json', top=None):
     results = dict()
     filenames = []
