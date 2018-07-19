@@ -19,9 +19,9 @@ def update(learner_type, agent, ys, dV, delta, eta, beta, ):
 
         # 2nd order derivative of opponent's (NL's) value function w.r.t. agent's (LOLA's) parameters
         # The for-loop exists as the gradients can only be calculated from scalar values
-        dV2_do = dVo[opponent]
-        d2Vo_doa = [torch.autograd.grad(dV2_do[i], ys[agent], create_graph=True)[0] for i in range(5)]
-        d2Vo_doa_Tensor = torch.cat([d2Vo_doa[i] for i in range(5)], 1)
+        dVo_do = dVo[opponent]
+        d2Vo_doa = [torch.autograd.grad(dVo_do[i], ys[agent], create_graph=True)[0] for i in range(5)]
+        d2Vo_doa_Tensor = torch.transpose(torch.cat([d2Vo_doa[i] for i in range(5)], 1), 0, 0)
 
         return (delta * dVa[agent] + delta * eta * torch.matmul(d2Vo_doa_Tensor, dVa[opponent])).data
 
@@ -30,20 +30,22 @@ def update(learner_type, agent, ys, dV, delta, eta, beta, ):
 
         # 2nd order derivative of opponent's (NL's) value function w.r.t. agent's (LOLA's) parameters
         # The for-loop exists as the gradients can only be calculated from scalar values
-        d2Vo_doa = [torch.autograd.grad(dVo[opponent][i], ys[agent], create_graph=True)[0] for i in range(5)]
-        d2Vo_doa_Tensor = torch.cat([d2Vo_doa[i] for i in range(5)], 1)
+        dVo_do = dVo[opponent]
+        d2Vo_doa = [torch.autograd.grad(dVo_do[i], ys[agent], create_graph=True)[0] for i in range(5)]
+        d2Vo_doa_Tensor = torch.transpose(torch.cat([d2Vo_doa[i] for i in range(5)], 1), 0, 0)
 
         # 2nd order derivative of agent's value function w.r.t. agent's (LOLA's) parameters
         # The for-loop exists as the gradients can only be calculated from scalar values
-        d2Va_doa = [torch.autograd.grad(dVa[opponent][i], ys[agent], create_graph=True)[0] for i in range(n)]
-        d2Va_doa_Tensor = torch.cat([d2Va_doa[i] for i in range(n)], 1)
+        dVa_do = dVa[opponent]
+        d2Va_doa = [torch.autograd.grad(dVa_do[i], ys[agent], create_graph=True)[0] for i in range(5)]
+        d2Va_doa_Tensor = torch.cat([d2Va_doa[i] for i in range(5)], 1)
 
         term1 = delta * dVa[agent]
         term2 = delta * eta * torch.matmul(d2Vo_doa_Tensor, dVa[opponent])
-        term3 = delta * eta * torch.matmul(d2Va_doa_Tensor.transpose(0, 1), dVo[opponent])
+        term3 = delta * eta * torch.matmul(d2Va_doa_Tensor, dVo[opponent])
         return (term1 + term2 + term3).data
 
-    # Second order LOLA (assuming opponent is NL)
+    # Second order LOLA (assuming opponent is 1st order LOLA)
     if learner_type == "LOLA2":
 
         # 2nd order derivative of opponent's (NL's) value function w.r.t. agent's (LOLA's) parameters

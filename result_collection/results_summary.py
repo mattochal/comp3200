@@ -29,7 +29,7 @@ def text_summary_TFT_R_std_single(path):
 def plot_TFT(path):
     results = load_results(path)
     X = np.array(get_initial_policies(results))
-    _, _, TFT1, TFT2 = get_end_R_std_TFT(results)
+    _, _, TFT1, TFT2 = get_end_R_std_compare(results)
 
     labels = []
     for t in TFT1:
@@ -50,7 +50,7 @@ def plot_TFT(path):
 def plot_decistion_tree_TFT(path):
     results = load_results(path)
     X = np.array(get_initial_policies(results))
-    _, _, TFT1, TFT2 = get_end_R_std_TFT(results)
+    _, _, TFT1, TFT2 = get_end_R_std_compare(results)
 
     labels = []
     for t in TFT1:

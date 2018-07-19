@@ -7,11 +7,14 @@ from myLOLA.av_return import av_return
 from myLOLA.value_fns import exact, policy_grad, modelling, full_modelling
 from agent_pair import AgentPair
 
+run_signature = ["length", "visualise", "record_trajectory", "payoff1", "payoff2", "gamma", "delta", "eta", "beta",
+                 "init_policy1", "init_policy2", "rollout_length", "num_rollout", "agents", "value_fn", "exact"]
 
-def run(n=200, visualise=False, record_trajectory=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2], gamma=0.8, delta=0.1, eta=10, beta=0,
-        init_policy1=[0.5, 0.5, 0.5, 0.5, 0.5], init_policy2=[0.5, 0.5, 0.5, 0.5, 0.5], rollout_length=50, num_rollout=50,
-        agents=["LOLA1", "LOLA1"], value_fn="exact"):
 
+def run(length=200, visualise=False, record_trajectory=False, payoff1=[-1, -3, 0, -2], payoff2=[-1, 0, -3, -2],
+        gamma=0.8, delta=0.1, eta=10, beta=0, num_rollout=50, rollout_length=50,
+        agents=["LOLA1", "LOLA1"], value_fn="exact",
+        init_policy1=[0.5, 0.5, 0.5, 0.5, 0.5], init_policy2=[0.5, 0.5, 0.5, 0.5, 0.5]):
     dtype = torch.FloatTensor
     results = {"epoch": []}
 
@@ -36,17 +39,15 @@ def run(n=200, visualise=False, record_trajectory=False, payoff1=[-1, -3, 0, -2]
     gamma = Variable(torch.Tensor([gamma]).type(dtype))
 
     # Term in f_nl update rule
-    delta = Variable(torch.Tensor([0.5]).type(dtype))
+    delta = Variable(torch.Tensor([delta]).type(dtype))
 
     # Term in f_lola1 update rule (first order LOLA)
-    eta = Variable(torch.Tensor([0.5]).type(dtype))
-
-    agents = ["LOLA1", "LOLA1"]
+    eta = Variable(torch.Tensor([eta]).type(dtype))
 
     # Term in f_lola2 update rule (higher order LOLA)
     beta = Variable(torch.Tensor([beta]).type(dtype))
 
-    for epoch in range(n):
+    for epoch in range(length):
         x1 = torch.sigmoid(y1)
         x2 = torch.sigmoid(y2)
 
@@ -92,30 +93,29 @@ def run(n=200, visualise=False, record_trajectory=False, payoff1=[-1, -3, 0, -2]
             _, _, dV1_from1, dV2_from1, dV1_from2, dV2_from2, my1, my2 = \
                 full_modelling(y1, y2, r1, r2, gamma, rollout_length, num_rollout, my1, my2)
 
-            dy1 += update(agents[0], 0, (y1, my2), (dV1_from1, dV2_from1), delta, eta, beta)
-            dy2 += update(agents[1], 1, (my1, y2), (dV1_from2, dV2_from2), delta, eta, beta)
+            dy1 = update(agents[0], 0, (y1, my2), (dV1_from1, dV2_from1), delta, eta, beta)
+            dy2 = update(agents[1], 1, (my1, y2), (dV1_from2, dV2_from2), delta, eta, beta)
             y1.data += dy1
             y2.data += dy2
 
         if record_trajectory:
             results["epoch"].append({"P1": np.squeeze(x1.data.cpu().numpy()).tolist(),
-                                    "P2": np.squeeze(x2.data.cpu().numpy()).tolist()})
+                                     "P2": np.squeeze(x2.data.cpu().numpy()).tolist()})
 
-        stft1 = np.abs(torch.sigmoid(y1).data.cpu().numpy() - [[1], [1], [0], [1], [0]])
-        stft2 = np.abs(torch.sigmoid(y2).data.cpu().numpy() - [[1], [1], [1], [0], [0]])
+        # stft1 = np.abs(torch.sigmoid(y1).data.cpu().numpy() - [[1], [1], [0], [1], [0]])
+        # stft2 = np.abs(torch.sigmoid(y2).data.cpu().numpy() - [[1], [1], [1], [0], [0]])
         # print("TFT new x1: ", np.all(stft1 < 0.25), sum(stft1))
         # print("TFT new x2: ", np.all(stft2 < 0.25), sum(stft2))
         # print("diff x1: ", (torch.sigmoid(y1) - x1).data.cpu().numpy())
         # print("diff x2: ", (torch.sigmoid(y2) - x2).data.cpu().numpy())
 
-
-        if epoch % 20 == 0 and visualise:
-            print('Epoch: ' + str(epoch))
-            print("x1: {}".format(x1.data.cpu().numpy().tolist()))
-            print("V1: {}".format(V1.data[0]))
-            print("x2: {}".format(x2.data.cpu().numpy().tolist()))
-            print("V2: {}".format(V2.data[0]))
-            print("Rewards: {}".format(av_return(x1, x2)))
+        # if epoch % 20 == 0 and visualise:
+        # print('Epoch: ' + str(epoch))
+        # print("x1: {}".format(x1.data.cpu().numpy().tolist()))
+        # print("V1: {}".format((V1 * (1-gamma)).data[0]))
+        # print("x2: {}".format(x2.data.cpu().numpy().tolist()))
+        # print("V2: {}".format((V2 * (1-gamma)).data[0]))
+        # print("Rewards: {}".format(av_return(x1, x2)))
 
     # return policy of both agents
     # print("init x1: {}".format(init_policy1))
@@ -168,12 +168,11 @@ class LOLA1B_VS_NL(AgentPairExact):
 
 class LOLA1B_VS_LOLA1(AgentPairExact):
     def run(self, seed):
-        self.parameters["agents"] = ["LOLA1B", "NL"]
+        self.parameters["agents"] = ["LOLA1B", "LOLA1"]
         return super(LOLA1B_VS_LOLA1, self).run(seed)
 
 
 class LOLA1_VS_LOLA1_PG(AgentPair):
-
     def run(self, seed):
         super(LOLA1_VS_LOLA1_PG, self).run(seed)
         self.parameters["agents"] = ["LOLA1", "LOLA1"]
@@ -183,12 +182,12 @@ class LOLA1_VS_LOLA1_PG(AgentPair):
 
 
 class LOLA1_VS_LOLA1_OM(AgentPair):
-
     def run(self, seed):
         super(LOLA1_VS_LOLA1_OM, self).run(seed)
         self.parameters["agents"] = ["LOLA1", "LOLA1"]
         self.parameters["value_fn"] = "modelling"
         return run(**self.parameters)
+
 
 if __name__ == "__main__":
     run(visualise=True)
@@ -226,4 +225,3 @@ if __name__ == "__main__":
 # dV2_d2 = dV2[1]
 # d2V2_d12 = [torch.autograd.grad(dV2_d2[i], y1, create_graph=True)[0] for i in range(5)]
 # d2V2_d12_Tensor = torch.cat([d2V2_d12[i] for i in range(5)], 1)
-

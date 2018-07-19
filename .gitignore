@@ -5,9 +5,11 @@ __pycache__/
 
 *.pdf
 iris
+*.csv
 
 test_results/
 results/
+results 2/
 results.zip
 
 lolaom_dilemmas/
