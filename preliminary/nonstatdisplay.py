@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
     # PGA PP vs PGA-PP
     try:
-        # raise Exception()
+        raise Exception()
         data = np.load("results/pgavpga.npy")
     except:
         a = []

@@ -68,7 +68,7 @@ def main(args):
     # config["simulation"]["length"] = 50
     # config["simulation"]["beta"] = 0.5
     # config["simulation"]["eta"] = 0.5
-    # config["simulation"]["agent_pair"] = "lola1_vs_lola1"
+    # config["simulation"]["agent_pair"] = "lola1b_vs_lola1b"
     # dist = "{" + """"name": "normal", "params": [{0}, {1}]""".format(0, 1) + "}"
     # config["agent_pair"]["init_policy_dist"] = json.loads(dist)
     # config["agent_pair"]["init_policy2"] =

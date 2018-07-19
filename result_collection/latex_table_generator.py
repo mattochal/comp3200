@@ -338,6 +338,7 @@ def table_st_space_R(folder="../results/lola_uniform_random_init_policy/"):
 
 
 if __name__ == "__main__":
-    # table_basic_experiments()
-    print_experimental_setup()
+    table_basic_experiments()
+    table_st_space_R()
+    # print_experimental_setup()
     # table_delta_eta_results()

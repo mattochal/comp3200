@@ -53,10 +53,16 @@ class PGAPPBelief(QBelief):
         super(PGAPPBelief, self).__init__(action_space, gamma)
         self.gamma = gamma
         self.eta = eta
+        self.beta = 0.01
+        # equal prob policy
+        self.state_policy = defaultdict(lambda: np.ones(action_space)/action_space)
 
     def update(self, state, action, reward, new_state, alpha):
+        # Update Q function
         super(PGAPPBelief, self).update(state, action, reward, new_state, alpha)
-        state_policy = self.exploration.policy(state)
+
+        # state_policy = self.exploration.policy(state)
+        state_policy = self.state_policy[state]  # State action value function
         state_v = np.dot(state_policy, self.Q[state])
 
         pd = defaultdict(lambda: np.zeros(self.action_space) * 1.0)  # partial derivative given current state
@@ -65,13 +71,17 @@ class PGAPPBelief(QBelief):
         eta = self.eta
 
         for a in range(self.action_space):
-            if abs(state_policy[a] - 1.0) < 0.01:
+            if abs(1.0 - state_policy[a]) < 0.01:
                 pd[state][a] = self.Q[state][a] - state_v
             else:
                 pd[state][a] = (self.Q[state][a] - state_v) / (1.0 - state_policy[a])
-            d[state][a] = pd[state][a] - gamma * abs(pd[state][a]) * state_policy[a]
+            d[state][a] = pd[state][a] - self.beta * abs(pd[state][a]) * state_policy[a]
             state_policy[a] += eta * d[state][a]
         self.exploration.update_policy(state, state_policy)
+
+        new_policy = np.clip(state_policy, 0, 1)
+        new_policy /= sum(new_policy)  # with projection into a valid space
+        self.state_policy[state] = new_policy
 
 
 class PGAPPLearner(Agent):

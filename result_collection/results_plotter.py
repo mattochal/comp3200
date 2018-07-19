@@ -187,21 +187,22 @@ def plot_R_std_TFT_through_epochs(path):
     plt.show()
 
 
-def set_legend_ax(ax, ncols=2):
+def set_legend_ax(ax, ncols=2, top=1.15, right=0.5, nkeys=None, shadow=True):
     # Shrink current axis's height by 10% on the bottom
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,
                      box.width, box.height * 0.9])
 
     # Put a legend below current axis
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), shadow=True, ncol=ncols)
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles[:nkeys], labels[:nkeys], loc='upper center', bbox_to_anchor=(right, top), shadow=shadow, ncol=ncols)
 
 
 def plot_policies_and_v_timeline(ordered_results, states=["s0", "CC", "CD", "DC", "DD"], title="", filename_to_save="",
-                                 prob_state="cooperation"):
+                                 prob_state="cooperation", gamma=0, r1=[], r2=[], top=None):
     cols = len(ordered_results) + 1
-    fig, axes = plt.subplots(nrows=1, ncols=cols, figsize=(11, 5))
-    plt.subplots_adjust(left=0.05, right=0.97, top=0.87, bottom=0.08, wspace=0.22, hspace=0.27)
+    fig, axes = plt.subplots(nrows=1, ncols=cols, figsize=(13, 4.5))
+    plt.subplots_adjust(left=0.05, right=0.97, top=0.87, bottom=0.08, wspace=0.27, hspace=0.27)
 
     colors = ["cyan", "blue", "orange", "green", "red"]
     # for r, row in enumerate(axes):
@@ -209,9 +210,9 @@ def plot_policies_and_v_timeline(ordered_results, states=["s0", "CC", "CD", "DC"
         X = get_end_policies(ordered_results[c])
         agent_pair = ordered_results[c]["config"]["simulation"]["agent_pair"]
         pair = viewer_friendly_pair(agent_pair, as_list=True)
-        X = np.array(X)
+        X = np.array(X)[:top]
         for s in range(5):
-            ax.scatter(X[:, 0, s], X[:, 1, s], s=55, c=colors[s], alpha=0.5, label=states[s])
+            ax.scatter(X[:, 0, s], X[:, 1, s], s=55, c=colors[s], alpha=0.35, label=states[s])
 
         ax.set_xlabel('P({0} | state) for agent 0 ({1})'.format(prob_state, pair[0]))
         ax.set_ylabel('P({0} | state) for agent 1 ({1})'.format(prob_state, pair[1]))
@@ -227,26 +228,155 @@ def plot_policies_and_v_timeline(ordered_results, states=["s0", "CC", "CD", "DC"
 
     # Two agents
     for r, results in enumerate(ordered_results):
-        av_R1, std_R1, _, _, av_R2, std_R2, _, _ = get_av_epoch_R_std_TFT(results)
-        X = [[av_R1, std_R1], [av_R2, std_R2]]
+        epoch_policies = np.array(get_epoch_policies(results))
+        Rrs = get_av_metrics_for_epoch_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1], std=True,
+                                                         metric_fn=lambda x1, x2: R(x1, x2, gamma=gamma, r1=r1, r2=r2))
+        X = [[Rrs[:, 0], Rrs[:, 2]], [Rrs[:, 1], Rrs[:, 3]]]
         agent_pair = results["config"]["simulation"]["agent_pair"]
 
         pair = viewer_friendly_pair(agent_pair, as_list=True)
 
         for a in range(2):
-            R = X[a]
+            Rr = X[a]
 
-            avr_v1 = moving_average(R[0], window_size=1)
-            min_v1 = moving_average(R[0] - R[1], window_size=1)
-            max_v1 = moving_average(R[0] + R[1], window_size=1)
+            avr_v1 = moving_average(Rr[0], window_size=1)
+            min_v1 = moving_average(Rr[0] - Rr[1], window_size=1)
+            max_v1 = moving_average(Rr[0] + Rr[1], window_size=1)
 
             x = np.arange(np.shape(avr_v1)[0])
-            ax.plot(x, avr_v1, pair_colours[r][a], alpha=0.5, label="a{0} {1}".format(a, pair[a]))
-            ax.fill_between(x, min_v1, max_v1, color=pair_colours[r][a], alpha=0.1)
+            ax.plot(x, avr_v1, pair_colours[r][a], alpha=0.6, label="a{0} {1}".format(a, pair[a]))
+            ax.fill_between(x, min_v1, max_v1, color=pair_colours[r][a], alpha=0.15)
 
     ax.set_xlabel('Iterations')
     ax.set_ylabel('Average reward per step, R')
     set_legend_ax(ax)
+
+    # plt.show()
+    plt.savefig(filename_to_save)
+    pass
+
+
+def plot_v_timeline_st_space_id(ordered_results, states=["s0", "CC", "CD", "DC", "DD"], title="", filename_to_save="",
+                                 prob_state="cooperation", gamma=0, r1=[], r2=[], top=None):
+    cols = 1
+    fig, axes = plt.subplots(nrows=1, ncols=cols, figsize=(3.5, 3.5))
+    plt.subplots_adjust(left=0.19, right=0.97, top=0.84, bottom=0.10, wspace=0.27, hspace=0.27)
+
+    ax = axes
+    pair_colours = [["red", "darkorange"], ["blue", "cyan"]]
+
+    # Two agents
+    for r, results in enumerate(ordered_results):
+        epoch_policies = np.array(get_epoch_policies(results))
+        Rrs = get_av_metrics_for_epoch_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1], std=True,
+                                                         metric_fn=lambda x1, x2: R(x1, x2, gamma=gamma, r1=r1, r2=r2))
+        X = [[Rrs[:, 0], Rrs[:, 2]], [Rrs[:, 1], Rrs[:, 3]]]
+        agent_pair = results["config"]["simulation"]["agent_pair"]
+
+        pair = viewer_friendly_pair(agent_pair, as_list=True)
+
+        for a in range(2):
+            Rr = X[a]
+
+            avr_v1 = moving_average(Rr[0], window_size=1)
+            min_v1 = moving_average(Rr[0] - Rr[1], window_size=1)
+            max_v1 = moving_average(Rr[0] + Rr[1], window_size=1)
+
+            x = np.arange(np.shape(avr_v1)[0])
+            ax.plot(x, avr_v1, pair_colours[r][a], alpha=0.6, label="a{0} {1}".format(a, pair[a]))
+            ax.fill_between(x, min_v1, max_v1, color=pair_colours[r][a], alpha=0.15)
+
+    ax.set_xlabel('Iterations')
+    ax.set_ylabel('Average reward per step, R')
+    set_legend_ax(ax, top=1.21)
+
+    # plt.show()
+    plt.savefig(filename_to_save)
+    pass
+
+
+def plot_ey_timeline_st_space_id(ordered_results, states=["s0", "CC", "CD", "DC", "DD"], title="", filename_to_save="",
+                                 prob_state="cooperation", gamma=0, r1=[], r2=[], top=None):
+    cols = 1
+    fig, axes = plt.subplots(nrows=1, ncols=cols, figsize=(3.4, 3.5))
+    plt.subplots_adjust(left=0.19, right=0.97, top=0.89, bottom=0.08, wspace=0.27, hspace=0.27)
+
+    ax = axes
+    pair_colours = ["blue", "darkorange", "green", "red"]
+    # pair_colours = ["blue", "orange", "green", "red"]
+
+    # Two agents
+    for r, results in enumerate(ordered_results):
+        epoch_policies = np.array(get_epoch_policies(results))
+        X = []
+        p1 = epoch_policies[:, :, 0]
+        p2 = epoch_policies[:, :, 1]
+        for s in range(1, 5):
+            Rrs = get_av_metrics_for_epoch_policy_arrays(p1, p2, std=True, join_policies=True,
+                                                             metric_fn=lambda x1, x2: exp_s(x1, x2, state=s))
+            X.append(Rrs)
+
+        # X = [[Rrs[:, 0], Rrs[:, 2]], [Rrs[:, 1], Rrs[:, 3]]]
+        X = np.array(X)
+        agent_pair = results["config"]["simulation"]["agent_pair"]
+
+        pair = viewer_friendly_pair(agent_pair, as_list=True)
+        STATES = ["CC", "CD", "DC", "DD"]
+        for a in range(4):
+            Rr = X[a]
+
+            # avr_v1 = moving_average(Rr[0], window_size=1)
+            # min_v1 = moving_average(Rr[0] - Rr[1], window_size=1)
+            # max_v1 = moving_average(Rr[0] + Rr[1], window_size=1)
+
+            x = np.arange(np.shape(Rr)[0])
+            ax.plot(x, Rr[:, 0], pair_colours[a], alpha=0.6, label=STATES[a])
+            ax.fill_between(x, Rr[:, 0] - Rr[:, 1], Rr[:, 0]+ Rr[:, 1], color=pair_colours[a], alpha=0.15)
+
+    ax.set_xlabel('Iterations')
+    ax.set_ylabel(r'Expected visits to state, $\mathbb{E}[Y(s)]$')
+    set_legend_ax(ax, top=1.15, right=0.4, ncols=4)
+
+    # plt.show()
+    plt.savefig(filename_to_save)
+    pass
+
+
+
+def plot_v_timeline_st_space_id_grid(ordered_results, states=["s0", "CC", "CD", "DC", "DD"], title="", filename_to_save="",
+                                 prob_state="cooperation", gamma=0, r1=[], r2=[], top=None):
+
+    fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(10, 10), sharex=True, sharey=True)
+    plt.subplots_adjust(left=0.19, right=0.97, top=0.84, bottom=0.10, wspace=0.27, hspace=0.27)
+
+    for rr, row in enumerate(axes):
+        for c, ax in enumerate(row):
+            pair_colours = [["red", "darkorange"], ["blue", "cyan"]]
+
+            # Two agents
+            for r, results in enumerate(ordered_results[rr][c]):
+                epoch_policies = np.array(get_epoch_policies(results))
+                Rrs = get_av_metrics_for_epoch_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1], std=True,
+                                                                 metric_fn=lambda x1, x2: R(x1, x2, gamma=gamma, r1=r1, r2=r2))
+                X = [[Rrs[:, 0], Rrs[:, 2]], [Rrs[:, 1], Rrs[:, 3]]]
+                agent_pair = results["config"]["simulation"]["agent_pair"]
+
+                pair = viewer_friendly_pair(agent_pair, as_list=True)
+
+                for a in range(2):
+                    Rr = X[a]
+
+                    avr_v1 = moving_average(Rr[0], window_size=1)
+                    min_v1 = moving_average(Rr[0] - Rr[1], window_size=1)
+                    max_v1 = moving_average(Rr[0] + Rr[1], window_size=1)
+
+                    x = np.arange(np.shape(avr_v1)[0])
+                    ax.plot(x, avr_v1, pair_colours[r][a], alpha=0.6, label="a{0} {1}".format(a, pair[a]))
+                    ax.fill_between(x, min_v1, max_v1, color=pair_colours[r][a], alpha=0.15)
+
+            ax.set_xlabel('Iterations')
+            ax.set_ylabel('Average reward per step, R')
+            set_legend_ax(ax, top=1.21)
 
     # plt.show()
     plt.savefig(filename_to_save)
@@ -419,12 +549,12 @@ def plot_v_timelines_for_delta_eta_combined_plot(ordered_results, states = ["s0"
     pass
 
 
-def plot_delta_eta_row_col_benchmarks(ordered_results, title="", titles=[], filename="", show=True, figsize=(6, 8),
+def plot_delta_eta_row_col_benchmarks(ordered_results, title="", titles=[], filename="", show=True, figsize=(5, 6),
                                       delta_or_eta="eta"):
-    n_metrix = 4
+    n_metrix = 3
 
-    fig, axes = plt.subplots(nrows=n_metrix, ncols=1, figsize=figsize, sharex=True)
-    plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.08, wspace=0.22, hspace=0.27)
+    fig, axes = plt.subplots(nrows=n_metrix, ncols=1, figsize=figsize, sharex=False)
+    plt.subplots_adjust(left=0.15, right=0.97, top=0.95, bottom=0.06, wspace=0.22, hspace=0.65)
 
     # colors = ["cyan", "blue", "orange", "green", "red"]
     # pair_colours = ["purple", "blue", "orange", "green", "red", "violet", "lightblue", "gold", "lightgreen", "darkred"]
@@ -453,9 +583,11 @@ def plot_delta_eta_row_col_benchmarks(ordered_results, title="", titles=[], file
 
     # ax.set_xlabel(r'$\{0}$'.format(delta_or_eta))
     ax.set_title(r'Effect of $\{0}$ on the average reward per step, R'.format(delta_or_eta))
-    ax.set_ylabel('Average reward per step, R')
-    ax.set_yticks(np.linspace(-2, -1, 5))
-    ax.grid(True)
+    ax.set_ylabel('R')
+    # ttl = ax.title
+    # ttl.set_position([.5, 1.05])
+    # ax.set_yticks(np.linspace(-2, -1, 5))
+    # ax.grid(True)
 
     ax = axes[1]
     # Convergence
@@ -469,66 +601,66 @@ def plot_delta_eta_row_col_benchmarks(ordered_results, title="", titles=[], file
 
         epoch_policies = np.array(get_epoch_policies(results))
         (conv1, conf_conv1) = get_av_metrics_for_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1], join_policies=True,
-                                                         conf_interval=0.95,
-                                                         metric_fn=lambda x1, x2: conv_2p(x1, x2, x=0.90, game="IPD"))
+                                                                conf_interval=0.95, metric_fn=lambda x1, x2: conv_2p(x1, x2, x=0.95, game="IPD"))
 
-        ax.errorbar(d_or_e, conv1, yerr=conf_conv1, fmt='s', c="darkgreen", ecolor="green", capthick=15, alpha=0.75, label="Conv(90%)")
-
-        (conv1, conf_conv1) = get_av_metrics_for_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1],
-                                                               join_policies=True,
-                                                               conf_interval=0.95,
-                                                               metric_fn=lambda x1, x2: conv_2p(x1, x2, x=0.95,
-                                                                                                game="IPD"))
-
-        ax.errorbar(d_or_e, conv1, yerr=conf_conv1, fmt='o', c="darkblue", ecolor="blue", capthick=15, alpha=0.75, label="Conv(95%)")
+        ax.errorbar(d_or_e, conv1, yerr=conf_conv1, fmt='x', c="darkgreen", ecolor="green", capthick=15, alpha=0.75, label="Conv(95%)")
 
         (conv1, conf_conv1) = get_av_metrics_for_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1],
                                                                join_policies=True,
-                                                               conf_interval=0.95,
-                                                               metric_fn=lambda x1, x2: conv_2p(x1, x2, x=0.99,
+                                                               conf_interval=0.95, metric_fn=lambda x1, x2: conv_2p(x1, x2, x=0.999,
                                                                                                 game="IPD"))
 
-        ax.errorbar(d_or_e, conv1, yerr=conf_conv1, fmt='x', c="darkred", ecolor="red", capthick=15, alpha=0.75, label="Conv(99%)")
+        ax.errorbar(d_or_e, conv1, yerr=conf_conv1, fmt='x', c="darkblue", ecolor="blue", capthick=15, alpha=0.75, label="Conv(99.9%)")
+
+        # (conv1, conf_conv1) = get_av_metrics_for_policy_arrays(epoch_policies[:, :, 0], epoch_policies[:, :, 1],
+        #                                                        join_policies=True,
+        #                                                        conf_interval=0.95, metric_fn=lambda x1, x2: conv_2p(x1, x2, x=0.99,
+        #                                                                                         game="IPD"))
+        #
+        # ax.errorbar(d_or_e, conv1, yerr=conf_conv1, fmt='x', c="darkred", ecolor="red", capthick=15, alpha=0.75, label="Conv(99%)")
 
         # set_legend_ax(ax, 3)
 
-    handles, labels = ax.get_legend_handles_labels()
-    legend = ax.legend(handles[:3], labels[:3], loc='lower left', ncol=1, borderaxespad=0, fancybox=True)
-    frame = legend.get_frame()
-    frame.set_edgecolor('black')
-    frame.set_alpha(1)
+    # handles, labels = ax.get_legend_handles_labels()
+    # legend = ax.legend(handles[:3], labels[:3], loc='lower left', ncol=1, borderaxespad=0, fancybox=True)
+    set_legend_ax(ax, ncols=4, nkeys=2, top=1.29, shadow=False)
+    # frame = legend.get_frame()
+    # frame.set_edgecolor('black')
+    # frame.set_alpha(1)
     # ax.set_xlabel(r'$\{0}$'.format(delta_or_eta))
-    ax.set_title(r'Effect of $\{0}$ on convergence, Conv(x), to x% of TFT strategy.'.format(delta_or_eta))
-    ax.set_ylabel('Average convergence time')
-    ax.grid(True)
+    ax.set_title(r'Effect of $\{0}$ on convergence, Conv(x)'.format(delta_or_eta))
+    ax.set_ylabel('Conv(x)')
+    ttl = ax.title
+    ttl.set_position([.5, 1.2])
+    # ax.grid(True)
     ax.set_yticks(np.linspace(0, 300, 4))
 
-    ax = axes[2]
-    x = []
-
-    # Average reward
-    for c, results in enumerate(ordered_results):
-        d_or_e = results["config"]["agent_pair"][delta_or_eta]
-        gamma = results["config"]["agent_pair"]["gamma"]
-        p1 = results["config"]["game"]["payoff1"]
-        p2 = results["config"]["game"]["payoff2"]
-
-        x.append(d_or_e)
-
-        end_policies = np.array(get_end_policies(results))
-        (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
-                                                         conf_interval=0.95,
-                                                         metric_fn=lambda x1, x2: tft2(x1, x2))
-
-        ax.errorbar(d_or_e, R1, yerr=conf_R1, fmt='o', c="darkgreen", ecolor="green", capthick=15, alpha=0.75)
-
+    # ax = axes[2]
+    # x = []
+    #
+    # # Average reward
+    # for c, results in enumerate(ordered_results):
+    #     d_or_e = results["config"]["agent_pair"][delta_or_eta]
+    #     gamma = results["config"]["agent_pair"]["gamma"]
+    #     p1 = results["config"]["game"]["payoff1"]
+    #     p2 = results["config"]["game"]["payoff2"]
+    #
+    #     x.append(d_or_e)
+    #
+    #     end_policies = np.array(get_end_policies(results))
+    #     (R1, conf_R1) = get_av_metrics_for_policy_arrays(end_policies[:, 0], end_policies[:, 1], join_policies=True,
+    #                                                      conf_interval=0.95,
+    #                                                      metric_fn=lambda x1, x2: tft2(x1, x2))
+    #
+    #     ax.errorbar(d_or_e, R1, yerr=conf_R1, fmt='o', c="darkgreen", ecolor="green", capthick=15, alpha=0.75)
+    #
     # ax.set_xlabel(r'$\{0}$'.format(delta_or_eta))
-    ax.set_title(r'Effect of $\{0}$ on %TFT2'.format(delta_or_eta))
-    ax.set_ylabel('Average %TFT2')
-    ax.grid(True)
-    ax.set_yticks(np.linspace(0, 1, 6))
+    # ax.set_title(r'Effect of $\{0}$ on %TFT2'.format(delta_or_eta))
+    # ax.set_ylabel('%TFT2')
+    # # ax.grid(True)
+    # ax.set_yticks(np.linspace(0, 1, 6))
 
-    ax = axes[3]
+    ax = axes[2]
     x = []
 
     # Average reward
@@ -568,23 +700,25 @@ def plot_delta_eta_row_col_benchmarks(ordered_results, title="", titles=[], file
 
         ax.errorbar(d_or_e, R1, yerr=conf_R1, fmt='^', c="darkred", ecolor="red", capthick=15, alpha=0.55, label="DD")
 
-    handles, labels = ax.get_legend_handles_labels()
-    legend = ax.legend(handles[:4], labels[:4], loc='best', ncol=1, borderaxespad=0, fancybox=True)
-    frame = legend.get_frame()
-    frame.set_edgecolor('black')
-    frame.set_alpha(1)
+    # handles, labels = ax.get_legend_handles_labels()
+    set_legend_ax(ax, ncols=4, nkeys=4, top=1.29)
+    # legend = ax.legend(handles[:4], labels[:4], loc='best', ncol=1, borderaxespad=0, fancybox=True)
+    # frame = legend.get_frame()
+    # frame.set_edgecolor('black')
+    # frame.set_alpha(1)
 
     ax.set_xlabel(r'$\{0}$'.format(delta_or_eta))
     ax.set_title(r'Effect of $\{0}$ on expected number of visits to state s'.format(delta_or_eta))
-    ax.set_ylabel('Expected visits to state s')
-    ax.grid(True)
+    ax.set_ylabel(r'$\mathbb{E}[Y(s)]$')
+    # ax.grid(True)
     ax.set_yticks(np.linspace(0, 100, 6))
-
-    if show:
-        plt.show()
-    else:
-        plt.savefig(filename)
-    pass
+    ttl = ax.title
+    ttl.set_position([.5, 1.2])
+    # if show:
+    # plt.show()
+    # else:
+    plt.savefig(filename)
+    # pass
 
 
 def plot_metrics_graph_randomness(ordered_results, title="", titles=[], filename="", show=True, figsize=(8, 3)):

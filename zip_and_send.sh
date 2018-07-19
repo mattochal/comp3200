@@ -1,21 +1,21 @@
-zip -r results.zip results/
+zip -r results.zip lola
 
 scp -r mo4g15@iridis4_a.soton.ac.uk:~/scheduling_internship_2017/results.zip ./
 scp -r mo4g15@iridis4_a.soton.ac.uk:~/scheduling_internship_2017/400-experiment-final.zip ./
 
-scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/lola1_random_init_policy_robustness.zip ./results/
+scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/results/lola_through_ST_space.zip ./results/
 scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/lolaom_long_epochs.zip ./results/
-scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/results.zip
+scp -r mo4g15@iridis4_a.soton.ac.uk:~/comp3200/results/basic_experiments.zip ./results/
 
-zip lolaom_random_init_long_epochs.zip lolaom_random_init_long_epochs/
-zip lolaom_long_epochs.zip lolaom_long_epochs/
+zip -r lola_robust_delta_eta.zip lola_robust_delta_eta/
+zip -r lolaom_long_epochs.zip lolaom_long_epochs/
 
-unzip lola1_random_init_policy_robustness.zip results/
+unzip lola_robust_delta_eta.zip results/
 unzip lola1b_random_init_policy_robustness.zip results/
 unzip results/lola_random_init_long_epochs.zip
 
-find . -maxdepth 1 -name "*.o509*" -delete
-find . -maxdepth 1 -name "*.e509*" -delete
+find . -maxdepth 1 -name "*.o522*" -delete
+find . -maxdepth 1 -name "*.e522*" -delete
 
 find . -maxdepth 1 -name "lolaom_*.zip" -delete
 
@@ -51,3 +51,10 @@ Saving to high-low-value-freq-ratio-2/exp10/config.json
 4976544.blue101
 
 cat to_zip | zip -r 400-experiment-var-final -@
+
+module unload python/2.7.5
+module load python/3.5.1
+module load numpy/1.9.1
+module unload python/2.7.5
+module unload numpy/1.9.1
+python batch_simulation.py

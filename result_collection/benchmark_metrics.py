@@ -10,7 +10,8 @@ COMPARISONS = {"TFT_IPD": [[1, 1, 0, 1, 0], [1, 1, 1, 0, 0]],
 TOLERANCE = {"TFT_IPD": 0.5,
              "NASH_IMP": 0.25,
              "ISH": 0.5,
-             "ISD": 0.5}
+             "ISD": 0.5,
+             "COOP": 0.5}
 
 MAX_DIFF = {"TFT_IPD": 1.0,
              "NASH_IMP": 0.5}
@@ -64,6 +65,13 @@ def prob_s(p1, p2, n=10, state=0):
     return [PP[state], PP[state]]
 
 
+def coop_s(p1, p2):
+    comparison_p = np.array([[1, 1], [1, 1]])
+    comparison1 = np.mean(np.ones(2) * 1 - np.abs(p1[:2] - comparison_p[0]))
+    comparison2 = np.mean(np.ones(2) * 1 - np.abs(p2[:2] - comparison_p[1]))
+    return [comparison1 * 100, comparison2 * 100]
+
+
 def conv_1p(p_epochs, x, comparison_p, max_dist, n=5):
     above = np.where(np.ones(np.shape(p_epochs)) * max_dist - np.abs(p_epochs - comparison_p) > x, [1], [0])
 
@@ -81,6 +89,7 @@ def conv_1p(p_epochs, x, comparison_p, max_dist, n=5):
     return len(above)
 
 
+# convergence to cooperative strategy
 def conv_2p(p1_epochs, p2_epochs, x, game, window=5):
     all_metrics = []
     N = np.shape(p1_epochs)[0]
@@ -94,7 +103,7 @@ def conv_2p(p1_epochs, p2_epochs, x, game, window=5):
             cs = nash2(p1, p2)
         if game == "IPD":
             # cs = prob_s(p1, p2, state=1)
-            cs = tft2(p1, p2)
+            cs = coop_s(p1, p2)
 
         all_metrics.append(cs)
 
@@ -104,8 +113,8 @@ def conv_2p(p1_epochs, p2_epochs, x, game, window=5):
             c1, c2 = all_metrics[l+n]
             acc1 += c1
             acc2 += c2
-        acc1 /= window
-        acc2 /= window
+        acc1 /= window * 100
+        acc2 /= window * 100
 
         if n >= t1 and n >= t2:
             return [t1, t2]

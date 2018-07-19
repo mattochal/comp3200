@@ -466,7 +466,7 @@ def basic_lola_replication(folder="basic_lola_replication_200_epochs/"):
             invoke_dilemma_qsubs(game, sub_folder, flags, params, agent_pair=agent_pair, walltime=wall_time)
 
 
-def lola_single_value_policy_init(folder="lolab_single_value_policy_init/"):
+def lola_single_value_policy_init(folder="lola_single_value_policy_init/"):
     global TEST
     TEST = True
     FOLDER_PREFIX = "results/"
@@ -479,14 +479,14 @@ def lola_single_value_policy_init(folder="lolab_single_value_policy_init/"):
     num_rollout = 0
     rollout_length = 0
 
-    agent_pairs = ["lola1b_vs_lola1b"]
+    agent_pairs = ["lola1_vs_lola1"]
 
     games = ["IPD"]
 
     wall_time_offset = 0
 
-    etas = {"IPD": 1, "IMP": 1}
-    deltas = {"IPD": 1, "IMP": 1}
+    etas = {"IPD": 100, "IMP": 1}
+    deltas = {"IPD": 0.01, "IMP": 1}
 
     sigmas = {"IPD": 1, "IMP": 1}
     gammas = {"IPD": 0.96, "IMP": 0.9}
@@ -526,6 +526,10 @@ def lola_single_value_policy_init(folder="lolab_single_value_policy_init/"):
 
 
 def lola_robust_delta_eta(folder="lola_robust_delta_eta/"):
+    global TEST
+    TEST = True
+    FOLDER_PREFIX = "results/"
+
     path_to_folder = WORKING_DIR + FOLDER_PREFIX + folder
     path_to_config = WORKING_DIR + "config.json"
 
@@ -537,15 +541,15 @@ def lola_robust_delta_eta(folder="lola_robust_delta_eta/"):
 
     agent_pairs = ["lola1_vs_lola1"]
 
-    games = ["IPD", "IMP"]
+    games = ["IPD"]
 
     sigmas = {"IPD": 1, "IMP": 1}
     gammas = {"IPD": 0.96, "IMP": 0.9}
 
     wall_time_offset = 60 * 60 * 1
 
-    ETA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0, 5.0]
-    DELTA = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0, 5.0]
+    ETA = [0.1, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 5.0, 10.0, 15.0, 20.0]
+    DELTA = [0.1, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 5.0, 10]
     # ETA = np.linspace(0.1, 2.0, 20)
     # DELTA = np.linspace(0.1, 2.0, 20)
 
@@ -553,6 +557,8 @@ def lola_robust_delta_eta(folder="lola_robust_delta_eta/"):
         for j, game in enumerate(games):
             for e, eta in enumerate(ETA):
                 for d, delta in enumerate(DELTA):
+                    if not( eta in [10.0, 15.0, 20.0] and delta in [0.1, 1.0]):
+                        break
                     sub_folder = path_to_folder + "D{0:02d}/E{1:02d}/".format(d, e)
                     os.makedirs(sub_folder, exist_ok=True)
                     wall_time = humanize_time(wall_time_offset)
@@ -578,21 +584,25 @@ def lola_robust_delta_eta(folder="lola_robust_delta_eta/"):
 
 
 def lola_through_ST_space(folder="lola_through_ST_space/"):
+    global TEST
+    TEST = True
+    FOLDER_PREFIX = "results/"
+
     path_to_folder = WORKING_DIR + FOLDER_PREFIX + folder
     path_to_config = WORKING_DIR + "config.json"
 
-    if TEST:
+    if not TEST:
         repeats = 3
         epoch_length = 2
     else:
-        repeats = 250
+        repeats = 50
         epoch_length = 100
 
     num_rollout = 0
     rollout_length = 0
     beta = 0
 
-    agent_pairs = ["lola1_vs_lola1"]  # , "lola1b_vs_lola1", "lola1b_vs_lola1b"]
+    agent_pairs = ["nl_vs_nl"]  # , "lola1b_vs_lola1", "lola1b_vs_lola1b"]
     sigma = 1  # for normal dist
     gamma = 0.96
     eta = 1
@@ -691,8 +701,8 @@ def lola_randomness_robustness(folder="lola_uniform_random_init_policy/"):
         invoke_dilemma_qsubs(game, sub_folder, flags, params, agent_pair=agent_pair, walltime=wall_time)
 
 
-TEST = True
-# TEST = False
+# TEST = True
+TEST = False
 
 # AGENT_PAIR = "lolaom_vs_lolaom"
 # FOLDER_PREFIX = "results/lolaom_"
@@ -721,8 +731,8 @@ if __name__ == "__main__":
     # randomness_robustness()
     # basic_experiments()
     # basic_lola_replication()
-    # lola_robust_delta_eta()
-    lola_through_ST_space()
+    lola_robust_delta_eta()
+    # lola_through_ST_space()
     # lola_single_value_policy_init()
     # lola_randomness_robustness()
     pass
